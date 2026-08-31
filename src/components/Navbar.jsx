@@ -40,13 +40,13 @@ export const Navbar = ({ onExportCSV, onOpenNewDrawer }) => {
           */}
 
           {/* Admin Profile Area */}
-          <div className="admin-profile-pill" title="Seva Kendra Admin Account">
+          {/* <div className="admin-profile-pill" title="Seva Kendra Admin Account">
             <div className="admin-avatar">SK</div>
             <div className="admin-info">
               <span className="admin-name">Admin Manager</span>
               <span className="admin-role">Seva Kendra #102</span>
             </div>
-          </div>
+          </div> */}
 
           <div className="date-pill">
             <Clock className="icon-sm" />
