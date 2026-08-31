@@ -2,12 +2,11 @@ import React from 'react';
 import { Building2, RefreshCw, Download, Clock, UserPlus } from 'lucide-react';
 
 export const Navbar = ({ onResetDemo, onExportCSV, onOpenNewDrawer }) => {
-  const todayDateStr = new Date().toLocaleDateString('en-IN', {
-    weekday: 'short',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const year = today.getFullYear();
+  const todayDateStr = `${day}/${month}/${year}`;
 
   return (
     <header className="navbar">

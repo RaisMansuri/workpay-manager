@@ -14,6 +14,7 @@ export function App() {
   const [editingRecord, setEditingRecord] = useState(null);
   const [viewingRecord, setViewingRecord] = useState(null);
   const [deletingRecord, setDeletingRecord] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Reload records asynchronously from Supabase PostgreSQL / Storage
@@ -53,6 +54,18 @@ export function App() {
     setToast({ message, type });
   };
 
+  // Open drawer for a new customer entry
+  const handleOpenNewDrawer = () => {
+    setEditingRecord(null);
+    setIsDrawerOpen(true);
+  };
+
+  // Handle Close Drawer
+  const handleCloseDrawer = () => {
+    setIsDrawerOpen(false);
+    setEditingRecord(null);
+  };
+
   // Handle Save (Add or Edit)
   const handleSaveRecord = async (record, isEdit) => {
     // 1. First save customer record in Supabase
@@ -60,6 +73,7 @@ export function App() {
     if (result.success) {
       setRecords(result.records);
       setEditingRecord(null);
+      setIsDrawerOpen(false); // Automatically close sliding drawer after successful save
 
       const savedRecord = result.record || record;
 
@@ -78,14 +92,15 @@ export function App() {
     }
   };
 
-  // Handle Edit Action
+  // Handle Edit Action from table row
   const handleStartEdit = (record) => {
     setEditingRecord(record);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsDrawerOpen(true);
   };
 
   const handleCancelEdit = () => {
     setEditingRecord(null);
+    setIsDrawerOpen(false);
   };
 
   // Handle Delete Action
@@ -97,6 +112,7 @@ export function App() {
       setDeletingRecord(null);
       if (editingRecord && editingRecord.id === id) {
         setEditingRecord(null);
+        setIsDrawerOpen(false);
       }
       showToast(
         targetRecord 
@@ -115,6 +131,7 @@ export function App() {
       const demoRecords = await customerStorage.resetToDemoDataAsync();
       setRecords(demoRecords);
       setEditingRecord(null);
+      setIsDrawerOpen(false);
       showToast('Database reset to sample demo customer records.', 'info');
     }
   };
@@ -155,42 +172,43 @@ export function App() {
 
   return (
     <div className="app-layout">
-      {/* Top Navbar Header */}
+      {/* Top Navbar Header with + New Entry Button */}
       <Navbar 
         onResetDemo={handleResetDemo}
         onExportCSV={handleExportCSV}
+        onOpenNewDrawer={handleOpenNewDrawer}
       />
 
       <main className="main-container">
         {/* Dashboard Summary KPI Cards */}
         <SummaryCards stats={stats} />
 
-        {/* Desktop Two-Column Dashboard Layout */}
+        {/* Full-Width Dashboard Table Layout */}
         <div className="dashboard-grid">
-          {/* Left Column: Form Entry */}
-          <section className="column-left">
-            <CustomerForm
-              editingRecord={editingRecord}
-              onSave={handleSaveRecord}
-              onCancelEdit={handleCancelEdit}
-              existingRecords={records}
-            />
-          </section>
-
-          {/* Right Column: Customer Data Grid */}
-          <section className="column-right">
+          <section className="column-full">
             <CustomerTable
               records={records}
               onEdit={handleStartEdit}
               onDelete={(record) => setDeletingRecord(record)}
               onViewDetails={(record) => setViewingRecord(record)}
+              onOpenNewDrawer={handleOpenNewDrawer}
               editingRecordId={editingRecord?.id}
             />
           </section>
         </div>
       </main>
 
-      {/* Modals & Toasts */}
+      {/* Right-Side Sliding Drawer Form */}
+      <CustomerForm
+        isOpen={isDrawerOpen}
+        onClose={handleCloseDrawer}
+        editingRecord={editingRecord}
+        onSave={handleSaveRecord}
+        onCancelEdit={handleCancelEdit}
+        existingRecords={records}
+      />
+
+      {/* Detail & Delete Modals & Toast */}
       {viewingRecord && (
         <CustomerDetailModal
           record={viewingRecord}

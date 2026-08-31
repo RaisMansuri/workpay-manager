@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Filter, Edit3, Trash2, Eye, Clock, CheckCircle2, RotateCcw, 
-  Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight 
+  Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus 
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
 import { WORK_STATUS, SEVA_SERVICES } from '../constants/serviceTypes';
@@ -11,6 +11,7 @@ export const CustomerTable = ({
   onEdit,
   onDelete,
   onViewDetails,
+  onOpenNewDrawer,
   editingRecordId
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -129,25 +130,27 @@ export const CustomerTable = ({
 
   return (
     <div className="card table-card">
-      {/* Table Top Controls: Search Bar & Filters */}
+      {/* Table Top Controls Bar */}
       <div className="table-header-controls">
-        <div className="search-box">
-          <Search className="search-icon" />
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search by Customer Name, Mobile Number, or Address..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <button className="clear-search-btn" onClick={() => setSearchTerm('')}>
-              ×
-            </button>
-          )}
+        <div className="table-controls-left">
+          <div className="search-box">
+            <Search className="search-icon" />
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search Customer Name, Mobile Number, or Address..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button className="clear-search-btn" onClick={() => setSearchTerm('')}>
+                ×
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="filter-controls-row">
+        <div className="table-controls-right">
           {/* Status Filter Pills */}
           <div className="status-filter-pills">
             {['All', WORK_STATUS.PENDING, WORK_STATUS.IN_PROGRESS, WORK_STATUS.COMPLETED].map((st) => (
@@ -182,6 +185,16 @@ export const CustomerTable = ({
               ))}
             </select>
           </div>
+
+          {/* New Customer Entry Button */}
+          <button 
+            className="btn-new-entry"
+            onClick={onOpenNewDrawer}
+            title="Register a new customer record"
+          >
+            <UserPlus className="icon-sm" />
+            <span>+ New Entry</span>
+          </button>
         </div>
       </div>
 

@@ -11,32 +11,42 @@ export const formatCurrency = (amount) => {
 };
 
 /**
- * Formats an ISO string or Date into a human-readable date & time string
- * e.g. "30 Aug 2026, 02:45 PM"
+ * Formats an ISO string or Date into dd/mm/yyyy, hh:mm AM/PM string
+ * e.g. "31/08/2026, 02:45 PM"
  */
 export const formatDateTime = (dateString) => {
   if (!dateString) return '-';
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return dateString;
 
-  return date.toLocaleString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  });
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strHours = String(hours).padStart(2, '0');
+
+  return `${day}/${month}/${year}, ${strHours}:${minutes} ${ampm}`;
 };
 
 /**
- * Formats date for HTML date input YYYY-MM-DD
+ * Formats date as dd/mm/yyyy string
+ * e.g. "31/08/2026"
  */
 export const formatDateOnly = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return '';
-  return date.toISOString().split('T')[0];
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
 };
 
 /**
