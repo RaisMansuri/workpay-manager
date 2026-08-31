@@ -17,12 +17,12 @@ export const Navbar = ({ onExportCSV, onOpenNewDrawer }) => {
             <Building2 className="brand-icon" />
           </div>
           <div className="brand-text-container">
-            <div className="brand-title-row">
+            {/* <div className="brand-title-row">
               <h1 className="brand-title">Seva Kendra Management System</h1>
             </div>
             <p className="brand-subtitle">
               Live Multi-User Customer & Service Workflow Portal
-            </p>
+            </p> */}
           </div>
         </div>
 
