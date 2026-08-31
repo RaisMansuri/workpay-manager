@@ -174,7 +174,6 @@ export function App() {
     <div className="app-layout">
       {/* Top Navbar Header with + New Entry Button */}
       <Navbar 
-        onResetDemo={handleResetDemo}
         onExportCSV={handleExportCSV}
         onOpenNewDrawer={handleOpenNewDrawer}
       />

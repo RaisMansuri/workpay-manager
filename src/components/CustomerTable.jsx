@@ -1,10 +1,301 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Search, Filter, Edit3, Trash2, Eye, Clock, CheckCircle2, RotateCcw, 
-  Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus 
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  Search, Filter, Edit3, Trash2, Eye, Clock, RotateCcw,
+  Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus, Info, X, Calendar, SlidersHorizontal
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
 import { WORK_STATUS, SEVA_SERVICES } from '../constants/serviceTypes';
+
+// Reusable Service Info Tooltip Component
+const ServiceInfoTooltip = ({ tooltipId, activeTooltipId, setActiveTooltipId, serviceType, workDescription }) => {
+  const isOpen = activeTooltipId === tooltipId;
+  const notesText = workDescription && workDescription.trim() ? workDescription.trim() : 'No notes available';
+
+  const toggleTooltip = (e) => {
+    e.stopPropagation();
+    setActiveTooltipId((prev) => (prev === tooltipId ? null : tooltipId));
+  };
+
+  return (
+    <div className="service-info-badge-group">
+      <span className="service-tag">{serviceType}</span>
+      <div className="service-info-icon-wrapper">
+        <button
+          type="button"
+          className="service-info-btn"
+          onClick={toggleTooltip}
+          onMouseEnter={() => setActiveTooltipId(tooltipId)}
+          onMouseLeave={() => setActiveTooltipId((prev) => (prev === tooltipId ? null : prev))}
+          aria-label="Notes information"
+        >
+          <Info className="icon-xs" />
+        </button>
+
+        {isOpen && (
+          <div className="service-compact-tooltip" onClick={(e) => e.stopPropagation()}>
+            <div className="tooltip-title">Work Description / Notes</div>
+            <div className="tooltip-body">{notesText}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Reusable Address Location Tooltip Component
+const AddressInfoTooltip = ({ tooltipId, activeTooltipId, setActiveTooltipId, address }) => {
+  const isOpen = activeTooltipId === tooltipId;
+  const addressText = address && address.trim() ? address.trim() : 'No address available';
+
+  const toggleTooltip = (e) => {
+    e.stopPropagation();
+    setActiveTooltipId((prev) => (prev === tooltipId ? null : tooltipId));
+  };
+
+  return (
+    <div className="address-info-icon-wrapper">
+      <button
+        type="button"
+        className="address-location-btn"
+        onClick={toggleTooltip}
+        onMouseEnter={() => setActiveTooltipId(tooltipId)}
+        onMouseLeave={() => setActiveTooltipId((prev) => (prev === tooltipId ? null : prev))}
+        aria-label="Address details"
+      >
+        <MapPin className="icon-xs" />
+      </button>
+
+      {isOpen && (
+        <div className="service-compact-tooltip address-tooltip" onClick={(e) => e.stopPropagation()}>
+          <div className="tooltip-title">Address / Locality</div>
+          <div className="tooltip-body">{addressText}</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// React Portal Filter Popover / Bottom Sheet Component
+const FilterPopover = ({
+  isOpen,
+  onClose,
+  anchorRef,
+  records,
+  selectedStatus,
+  selectedService,
+  selectedDateOption,
+  fromDate,
+  toDate,
+  onApplyFilters,
+  onResetFilters
+}) => {
+  const [draftStatus, setDraftStatus] = useState(selectedStatus);
+  const [draftService, setDraftService] = useState(selectedService);
+  const [draftDateOption, setDraftDateOption] = useState(selectedDateOption);
+  const [draftFromDate, setDraftFromDate] = useState(fromDate);
+  const [draftToDate, setDraftToDate] = useState(toDate);
+  const [coords, setCoords] = useState({ top: 0, right: 0, isMobile: false });
+
+  // Sync draft state when opened
+  useEffect(() => {
+    if (isOpen) {
+      setDraftStatus(selectedStatus);
+      setDraftService(selectedService);
+      setDraftDateOption(selectedDateOption);
+      setDraftFromDate(fromDate);
+      setDraftToDate(toDate);
+    }
+  }, [isOpen, selectedStatus, selectedService, selectedDateOption, fromDate, toDate]);
+
+  // Calculate positioning coordinates relative to anchor button
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updatePosition = () => {
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        setCoords({ isMobile: true, top: 0, right: 0 });
+      } else if (anchorRef && anchorRef.current) {
+        const rect = anchorRef.current.getBoundingClientRect();
+        const rightSpace = window.innerWidth - rect.right;
+        const top = rect.bottom + 8;
+        setCoords({
+          top,
+          right: Math.max(16, rightSpace),
+          isMobile: false
+        });
+      }
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen, anchorRef]);
+
+  // Outside click & Escape key listener
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOutsideClick = (e) => {
+      if (anchorRef && anchorRef.current && anchorRef.current.contains(e.target)) {
+        return;
+      }
+      const popoverEl = document.getElementById('filter-popover-portal-container');
+      if (popoverEl && !popoverEl.contains(e.target)) {
+        onClose();
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, anchorRef, onClose]);
+
+  if (!isOpen) return null;
+
+  const handleApply = () => {
+    onApplyFilters({
+      status: draftStatus,
+      service: draftService,
+      dateOption: draftDateOption,
+      fromDate: draftFromDate,
+      toDate: draftToDate
+    });
+  };
+
+  const DATE_OPTIONS = ['All Time', 'Today', 'Yesterday', 'This Week', 'This Month', 'Custom Date Range'];
+
+  const popoverContent = (
+    <div className={`filter-popover-backdrop ${coords.isMobile ? 'is-mobile' : 'is-desktop'}`}>
+      <div
+        id="filter-popover-portal-container"
+        className={`filter-popover-panel ${coords.isMobile ? 'mobile-sheet' : 'desktop-popover'}`}
+        style={
+          !coords.isMobile
+            ? {
+                position: 'fixed',
+                top: `${coords.top}px`,
+                right: `${coords.right}px`,
+                zIndex: 10000
+              }
+            : {}
+        }
+      >
+        <div className="filter-modal-header">
+          <div className="filter-modal-title">
+            <SlidersHorizontal className="icon-sm" />
+            <span>Filters</span>
+          </div>
+          <button className="drawer-close-btn" onClick={onClose} title="Close Filters (Esc)">
+            <X className="icon-sm" />
+          </button>
+        </div>
+
+        <div className="filter-modal-body">
+          {/* Work Status Section */}
+          <div className="filter-section">
+            <label className="filter-section-label">Work Status</label>
+            <div className="filter-pills-grid">
+              {['All', WORK_STATUS.PENDING, WORK_STATUS.IN_PROGRESS, WORK_STATUS.COMPLETED].map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  className={`filter-pill-btn ${draftStatus === st ? 'active' : ''}`}
+                  onClick={() => setDraftStatus(st)}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Service Type Section */}
+          <div className="filter-section">
+            <label className="filter-section-label">Service Type</label>
+            <select
+              className="form-select filter-select"
+              value={draftService}
+              onChange={(e) => setDraftService(e.target.value)}
+            >
+              <option value="All">All Services</option>
+              {SEVA_SERVICES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Date Filter Section */}
+          <div className="filter-section">
+            <label className="filter-section-label">Date Filter</label>
+            <div className="date-options-grid">
+              {DATE_OPTIONS.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  className={`date-option-btn ${draftDateOption === opt ? 'active' : ''}`}
+                  onClick={() => setDraftDateOption(opt)}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+
+            {draftDateOption === 'Custom Date Range' && (
+              <div className="custom-date-inputs">
+                <div className="form-group date-field mb-0">
+                  <label className="form-label text-xs">From Date</label>
+                  <input
+                    type="date"
+                    className="form-control form-control-sm"
+                    value={draftFromDate}
+                    onChange={(e) => setDraftFromDate(e.target.value)}
+                  />
+                </div>
+                <div className="form-group date-field mb-0">
+                  <label className="form-label text-xs">To Date</label>
+                  <input
+                    type="date"
+                    className="form-control form-control-sm"
+                    value={draftToDate}
+                    onChange={(e) => setDraftToDate(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="filter-modal-footer">
+          <button type="button" className="btn btn-secondary flex-1" onClick={onResetFilters}>
+            Reset
+          </button>
+          <button type="button" className="btn btn-primary flex-1" onClick={handleApply}>
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(popoverContent, document.body);
+};
 
 export const CustomerTable = ({
   records,
@@ -17,15 +308,37 @@ export const CustomerTable = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedService, setSelectedService] = useState('All');
+  const [selectedDateOption, setSelectedDateOption] = useState('All Time');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+
+  // Ref for anchoring desktop filter popover
+  const desktopFilterBtnRef = useRef(null);
+  const mobileFilterBtnRef = useRef(null);
+
+  // Filter Panel Open State
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
   // Pagination state - Default 10 rows per page
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // Active Tooltip state (only one tooltip open at a time)
+  const [activeTooltipId, setActiveTooltipId] = useState(null);
+
+  // Close active tooltip when clicking anywhere outside
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setActiveTooltipId(null);
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+
   // Reset to Page 1 when filters or search change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedStatus, selectedService, rowsPerPage]);
+  }, [searchTerm, selectedStatus, selectedService, selectedDateOption, fromDate, toDate, rowsPerPage]);
 
   // Helper for generating Customer Initials Avatar
   const getInitials = (name) => {
@@ -57,7 +370,63 @@ export const CustomerTable = ({
     return gradients[index];
   };
 
-  // Filter records based on Search, Status, and Service Type
+  // Helper for filtering records by Date Option
+  const filterByDateOption = (recordDateStr, option, fDateStr, tDateStr) => {
+    if (!recordDateStr || option === 'All Time') return true;
+
+    const recDate = new Date(recordDateStr);
+    if (isNaN(recDate.getTime())) return true;
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    if (option === 'Today') {
+      return recDate >= todayStart && recDate <= todayEnd;
+    }
+
+    if (option === 'Yesterday') {
+      const yestStart = new Date(todayStart);
+      yestStart.setDate(yestStart.getDate() - 1);
+      const yestEnd = new Date(todayEnd);
+      yestEnd.setDate(yestEnd.getDate() - 1);
+      return recDate >= yestStart && recDate <= yestEnd;
+    }
+
+    if (option === 'This Week') {
+      const weekStart = new Date(todayStart);
+      const day = weekStart.getDay();
+      const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
+      weekStart.setDate(diff);
+      return recDate >= weekStart && recDate <= todayEnd;
+    }
+
+    if (option === 'This Month') {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      return recDate >= monthStart && recDate <= todayEnd;
+    }
+
+    if (option === 'Custom Date Range') {
+      let valid = true;
+      if (fDateStr) {
+        const fDate = new Date(`${fDateStr}T00:00:00`);
+        if (!isNaN(fDate.getTime())) {
+          valid = valid && recDate >= fDate;
+        }
+      }
+      if (tDateStr) {
+        const tDate = new Date(`${tDateStr}T23:59:59.999`);
+        if (!isNaN(tDate.getTime())) {
+          valid = valid && recDate <= tDate;
+        }
+      }
+      return valid;
+    }
+
+    return true;
+  };
+
+  // Filter records based on Search, Status, Service Type, and Date Filter
   const filteredRecords = records.filter((record) => {
     const query = searchTerm.trim().toLowerCase();
     const matchesSearch =
@@ -73,8 +442,33 @@ export const CustomerTable = ({
     const matchesService =
       selectedService === 'All' || record.serviceType === selectedService;
 
-    return matchesSearch && matchesStatus && matchesService;
+    const matchesDate = filterByDateOption(record.createdAt, selectedDateOption, fromDate, toDate);
+
+    return matchesSearch && matchesStatus && matchesService && matchesDate;
   });
+
+  const activeFilterCount =
+    (selectedStatus !== 'All' ? 1 : 0) +
+    (selectedService !== 'All' ? 1 : 0) +
+    (selectedDateOption !== 'All Time' ? 1 : 0);
+
+  const handleApplyMobileFilters = ({ status, service, dateOption, fromDate: fD, toDate: tD }) => {
+    setSelectedStatus(status);
+    setSelectedService(service);
+    setSelectedDateOption(dateOption);
+    setFromDate(fD);
+    setToDate(tD);
+    setIsFilterPanelOpen(false);
+  };
+
+  const handleResetMobileFilters = () => {
+    setSelectedStatus('All');
+    setSelectedService('All');
+    setSelectedDateOption('All Time');
+    setFromDate('');
+    setToDate('');
+    setIsFilterPanelOpen(false);
+  };
 
   // Calculate Pagination Slices
   const totalPages = Math.max(1, Math.ceil(filteredRecords.length / rowsPerPage));
@@ -88,21 +482,18 @@ export const CustomerTable = ({
       case WORK_STATUS.PENDING:
         return (
           <span className="badge badge-status-pending">
-            <Clock className="icon-xs" />
             Pending
           </span>
         );
       case WORK_STATUS.IN_PROGRESS:
         return (
           <span className="badge badge-status-in-progress">
-            <RotateCcw className="icon-xs spin-slow" />
             In Progress
           </span>
         );
       case WORK_STATUS.COMPLETED:
         return (
           <span className="badge badge-status-completed">
-            <CheckCircle2 className="icon-xs" />
             Completed
           </span>
         );
@@ -128,17 +519,20 @@ export const CustomerTable = ({
     return pages;
   };
 
+  const activeAnchorRef = window.innerWidth <= 768 ? mobileFilterBtnRef : desktopFilterBtnRef;
+
   return (
     <div className="card table-card">
       {/* Table Top Controls Bar */}
       <div className="table-header-controls">
-        <div className="table-controls-left">
+        {/* ROW 1 (Desktop > 768px): Search on Left | Filters + New Entry on Right */}
+        <div className="desktop-controls-top">
           <div className="search-box">
             <Search className="search-icon" />
             <input
               type="text"
               className="search-input"
-              placeholder="Search Customer Name, Mobile Number, or Address..."
+              placeholder="Search customer or mobile..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -148,25 +542,99 @@ export const CustomerTable = ({
               </button>
             )}
           </div>
+
+          <div className="desktop-top-actions">
+            {/* Temporarily commented out desktop Filters button as requested
+            <button
+              ref={desktopFilterBtnRef}
+              type="button"
+              className={`btn-mobile-filter-trigger ${activeFilterCount > 0 ? 'has-active-filters' : ''}`}
+              onClick={() => setIsFilterPanelOpen((prev) => !prev)}
+              title="Open Advanced Filters"
+            >
+              <SlidersHorizontal className="icon-xs" />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="filter-active-badge">({activeFilterCount})</span>
+              )}
+            </button>
+            */}
+
+            <button
+              className="btn-new-entry"
+              onClick={onOpenNewDrawer}
+              title="Register a new customer record"
+            >
+              <UserPlus className="icon-sm" />
+              <span>New Entry</span>
+            </button>
+          </div>
         </div>
 
-        <div className="table-controls-right">
-          {/* Status Filter Pills */}
-          <div className="status-filter-pills">
-            {['All', WORK_STATUS.PENDING, WORK_STATUS.IN_PROGRESS, WORK_STATUS.COMPLETED].map((st) => (
-              <button
-                key={st}
-                className={`pill-btn ${selectedStatus === st ? 'active' : ''}`}
-                onClick={() => setSelectedStatus(st)}
-              >
-                {st}
-                <span className="pill-count">
-                  {st === 'All'
-                    ? records.length
-                    : records.filter((r) => r.status === st).length}
-                </span>
+        {/* Mobile Filter & Search Controls (≤ 768px) */}
+        <div className="mobile-controls-row">
+          <div className="search-box mobile-search-box">
+            <Search className="search-icon" />
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search customer or mobile..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button className="clear-search-btn" onClick={() => setSearchTerm('')}>
+                ×
               </button>
-            ))}
+            )}
+          </div>
+
+          <div className="mobile-buttons-row">
+            <button
+              ref={mobileFilterBtnRef}
+              type="button"
+              className={`btn-mobile-filter-trigger ${activeFilterCount > 0 ? 'has-active-filters' : ''}`}
+              onClick={() => setIsFilterPanelOpen((prev) => !prev)}
+            >
+              <SlidersHorizontal className="icon-xs" />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="filter-active-badge">({activeFilterCount})</span>
+              )}
+            </button>
+
+            <button
+              className="btn-new-entry"
+              onClick={onOpenNewDrawer}
+              title="Register a new customer record"
+            >
+              <UserPlus className="icon-sm" />
+              <span>New Entry</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ROW 2 (Desktop > 768px): Filter Controls Dropdowns */}
+        <div className="table-controls-right desktop-filters-row">
+          {/* Status Dropdown Filter */}
+          <div className="service-filter-wrapper">
+            <Clock className="input-icon" />
+            <select
+              className="form-select service-select-sm"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="All">All Statuses ({records.length})</option>
+              <option value={WORK_STATUS.PENDING}>
+                Pending ({records.filter((r) => r.status === WORK_STATUS.PENDING).length})
+              </option>
+              <option value={WORK_STATUS.IN_PROGRESS}>
+                In Progress ({records.filter((r) => r.status === WORK_STATUS.IN_PROGRESS).length})
+              </option>
+              <option value={WORK_STATUS.COMPLETED}>
+                Completed ({records.filter((r) => r.status === WORK_STATUS.COMPLETED).length})
+              </option>
+            </select>
           </div>
 
           {/* Service Dropdown Filter */}
@@ -186,20 +654,46 @@ export const CustomerTable = ({
             </select>
           </div>
 
-          {/* New Customer Entry Button */}
-          <button 
-            className="btn-new-entry"
-            onClick={onOpenNewDrawer}
-            title="Register a new customer record"
-          >
-            <UserPlus className="icon-sm" />
-            <span>+ New Entry</span>
-          </button>
+          {/* Date Filter Dropdown */}
+          <div className="service-filter-wrapper">
+            <Calendar className="input-icon" />
+            <select
+              className="form-select service-select-sm"
+              value={selectedDateOption}
+              onChange={(e) => setSelectedDateOption(e.target.value)}
+            >
+              <option value="All Time">All Time</option>
+              <option value="Today">Today</option>
+              <option value="Yesterday">Yesterday</option>
+              <option value="This Week">This Week</option>
+              <option value="This Month">This Month</option>
+              <option value="Custom Date Range">Custom Date Range</option>
+            </select>
+          </div>
+
+          {selectedDateOption === 'Custom Date Range' && (
+            <div className="custom-date-inputs-desktop">
+              <input
+                type="date"
+                className="form-select service-select-sm"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                title="From Date"
+              />
+              <input
+                type="date"
+                className="form-select service-select-sm"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                title="To Date"
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Data Table Container */}
-      <div className="table-responsive">
+      {/* Desktop Data Table View (> 768px) */}
+      <div className="table-responsive desktop-table-view">
         <table className="data-table">
           <thead>
             <tr>
@@ -235,23 +729,25 @@ export const CustomerTable = ({
                     key={record.id}
                     className={`table-row ${isEditingThis ? 'editing-row' : ''}`}
                   >
-                    {/* Customer Name with Initials Avatar */}
+                    {/* Customer Name with Initials Avatar & Location Icon Tooltip */}
                     <td className="cell-customer">
                       <div className="customer-cell-container">
-                        <div 
+                        <div
                           className="customer-avatar"
                           style={{ background: getAvatarGradient(record.customerName) }}
                         >
                           {getInitials(record.customerName)}
                         </div>
                         <div className="customer-name-wrapper">
-                          <strong className="customer-name">{record.customerName}</strong>
-                          {record.address && (
-                            <span className="customer-address">
-                              <MapPin className="icon-xs inline-icon" />
-                              {record.address}
-                            </span>
-                          )}
+                          <div className="customer-name-row">
+                            <strong className="customer-name">{record.customerName}</strong>
+                            <AddressInfoTooltip
+                              tooltipId={`dt-addr-${record.id}`}
+                              activeTooltipId={activeTooltipId}
+                              setActiveTooltipId={setActiveTooltipId}
+                              address={record.address}
+                            />
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -264,14 +760,15 @@ export const CustomerTable = ({
                       </a>
                     </td>
 
-                    {/* Service Type */}
+                    {/* Service Type with Info Tooltip */}
                     <td className="cell-service">
-                      <span className="service-tag">{record.serviceType}</span>
-                      {record.workDescription && (
-                        <p className="work-desc-preview" title={record.workDescription}>
-                          {record.workDescription}
-                        </p>
-                      )}
+                      <ServiceInfoTooltip
+                        tooltipId={`dt-svc-${record.id}`}
+                        activeTooltipId={activeTooltipId}
+                        setActiveTooltipId={setActiveTooltipId}
+                        serviceType={record.serviceType}
+                        workDescription={record.workDescription}
+                      />
                     </td>
 
                     {/* Work Status */}
@@ -341,19 +838,168 @@ export const CustomerTable = ({
         </table>
       </div>
 
+      {/* Mobile Khata Book Ledger List View (<= 768px) */}
+      <div className="mobile-card-list-view">
+        {paginatedRecords.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-content">
+              <Inbox className="empty-icon" />
+              <h4>No Customer Records Found</h4>
+              <p>Try adjusting your search query or status filters.</p>
+            </div>
+          </div>
+        ) : (
+          paginatedRecords.map((record) => {
+            const isEditingThis = editingRecordId === record.id;
+            const hasBalance = record.remainingBalance > 0;
+
+            return (
+              <div
+                key={record.id}
+                className={`mobile-ledger-card ${isEditingThis ? 'editing-card' : ''}`}
+              >
+                {/* 1. Header: Avatar | Name + Location Icon | Status Badge */}
+                <div className="ledger-card-header">
+                  <div className="ledger-customer-info">
+                    <div
+                      className="customer-avatar"
+                      style={{ background: getAvatarGradient(record.customerName) }}
+                    >
+                      {getInitials(record.customerName)}
+                    </div>
+                    <div className="ledger-customer-details">
+                      <div className="customer-name-row">
+                        <h4 className="ledger-customer-name">{record.customerName}</h4>
+                        <AddressInfoTooltip
+                          tooltipId={`mb-addr-${record.id}`}
+                          activeTooltipId={activeTooltipId}
+                          setActiveTooltipId={setActiveTooltipId}
+                          address={record.address}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="ledger-status-box">
+                    {getStatusBadge(record.status)}
+                  </div>
+                </div>
+
+                {/* 2. Mobile Phone Pill Button */}
+                <div className="ledger-phone-row">
+                  <a href={`tel:${record.mobileNumber}`} className="mobile-phone-pill" title="Tap to Call Customer">
+                    <Phone className="icon-xs" />
+                    <span>{record.mobileNumber}</span>
+                  </a>
+                </div>
+
+                {/* 3. Service Tag with Info Tooltip */}
+                <div className="ledger-service-row">
+                  <ServiceInfoTooltip
+                    tooltipId={`mb-svc-${record.id}`}
+                    activeTooltipId={activeTooltipId}
+                    setActiveTooltipId={setActiveTooltipId}
+                    serviceType={record.serviceType}
+                    workDescription={record.workDescription}
+                  />
+                </div>
+
+                {/* 4. 3-Column Khata Book Ledger Payment Grid */}
+                <div className="ledger-payment-grid">
+                  <div className="ledger-col">
+                    <span className="ledger-label">TOTAL</span>
+                    <span className="ledger-val">{formatCurrency(record.totalAmount)}</span>
+                  </div>
+
+                  <div className="ledger-col">
+                    <span className="ledger-label">PAID</span>
+                    <span className="ledger-val text-green">{formatCurrency(record.paidAmount)}</span>
+                  </div>
+
+                  <div className="ledger-col">
+                    <span className="ledger-label">BALANCE</span>
+                    {hasBalance ? (
+                      <span className="remaining-balance-pill">
+                        {formatCurrency(record.remainingBalance)} Due
+                      </span>
+                    ) : (
+                      <span className="paid-balance-pill">
+                        Paid (₹0)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 5. Card Footer: Date on left & Icon-Only Action Buttons on Right */}
+                <div className="mobile-card-actions">
+                  <span className="ledger-date-text">
+                    <Clock className="icon-xs inline-icon" />
+                    {formatDateTime(record.createdAt)}
+                  </span>
+
+                  <div className="action-buttons-group mobile-actions-right">
+                    <button
+                      className="action-btn edit-btn"
+                      title="Edit Customer Record"
+                      onClick={() => onEdit(record)}
+                    >
+                      <Edit3 className="icon-sm" />
+                    </button>
+
+                    <button
+                      className="action-btn view-btn"
+                      title="View Service Ticket / Receipt"
+                      onClick={() => onViewDetails(record)}
+                    >
+                      <Eye className="icon-sm" />
+                    </button>
+
+                    <button
+                      className="action-btn delete-btn"
+                      title="Delete Record"
+                      onClick={() => onDelete(record)}
+                    >
+                      <Trash2 className="icon-sm" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* React Portal Filter Popover / Bottom Sheet */}
+      <FilterPopover
+        isOpen={isFilterPanelOpen}
+        onClose={() => setIsFilterPanelOpen(false)}
+        anchorRef={activeAnchorRef}
+        records={records}
+        selectedStatus={selectedStatus}
+        selectedService={selectedService}
+        selectedDateOption={selectedDateOption}
+        fromDate={fromDate}
+        toDate={toDate}
+        onApplyFilters={handleApplyMobileFilters}
+        onResetFilters={handleResetMobileFilters}
+      />
+
       {/* Single-Row Centered Pagination Footer */}
       <div className="table-pagination-footer">
-        <div className="pagination-info-item">
+        <div className="pagination-info-item pagination-info-text">
           <span className="pagination-count-text">
             Showing <strong>{filteredRecords.length > 0 ? startIndex + 1 : 0}</strong> - <strong>{endIndex}</strong> of <strong>{filteredRecords.length}</strong> records
           </span>
-          {(searchTerm || selectedStatus !== 'All' || selectedService !== 'All') && (
+          {(searchTerm || selectedStatus !== 'All' || selectedService !== 'All' || selectedDateOption !== 'All Time') && (
             <button
-              className="btn-link ml-2"
+              type="button"
+              className="btn-clear-filters-secondary"
               onClick={() => {
                 setSearchTerm('');
                 setSelectedStatus('All');
                 setSelectedService('All');
+                setSelectedDateOption('All Time');
+                setFromDate('');
+                setToDate('');
               }}
             >
               Clear Filters

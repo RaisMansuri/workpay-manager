@@ -179,7 +179,7 @@ export const CustomerForm = ({
             <div className="form-section">
               <div className="form-section-title-row">
                 <User className="form-section-icon" />
-                <span className="form-section-title">👤 Customer Details</span>
+                <span className="form-section-title">Customer Details</span>
               </div>
 
               <div className="form-row form-row-2">
@@ -238,11 +238,12 @@ export const CustomerForm = ({
             <div className="form-section">
               <div className="form-section-title-row">
                 <Layers className="form-section-icon" />
-                <span className="form-section-title">📄 Service Details</span>
+                <span className="form-section-title">Service Details</span>
               </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="serviceType">
+                  <Layers className="input-icon" />
                   Service Type *
                 </label>
                 <select
@@ -262,6 +263,7 @@ export const CustomerForm = ({
               {isCustomService && (
                 <div className="form-group">
                   <label className="form-label" htmlFor="customServiceType">
+                    <Layers className="input-icon" />
                     Specify Custom Service *
                   </label>
                   <input
@@ -301,7 +303,6 @@ export const CustomerForm = ({
                     className={`status-option-btn status-pending ${formData.status === WORK_STATUS.PENDING ? 'active' : ''}`}
                     onClick={() => handleInputChange('status', WORK_STATUS.PENDING)}
                   >
-                    <Clock className="icon-xs" />
                     <span>Pending</span>
                   </button>
 
@@ -310,7 +311,6 @@ export const CustomerForm = ({
                     className={`status-option-btn status-in-progress ${formData.status === WORK_STATUS.IN_PROGRESS ? 'active' : ''}`}
                     onClick={() => handleInputChange('status', WORK_STATUS.IN_PROGRESS)}
                   >
-                    <RotateCcw className="icon-xs spin-slow" />
                     <span>In Progress</span>
                   </button>
 
@@ -319,7 +319,6 @@ export const CustomerForm = ({
                     className={`status-option-btn status-completed ${formData.status === WORK_STATUS.COMPLETED ? 'active' : ''}`}
                     onClick={() => handleInputChange('status', WORK_STATUS.COMPLETED)}
                   >
-                    <CheckCircle2 className="icon-xs" />
                     <span>Completed</span>
                   </button>
                 </div>
@@ -330,7 +329,7 @@ export const CustomerForm = ({
             <div className="form-section">
               <div className="form-section-title-row">
                 <CreditCard className="form-section-icon" />
-                <span className="form-section-title">💰 Payment Details</span>
+                <span className="form-section-title">Payment Details</span>
               </div>
 
               <div className="billing-section-box">
@@ -393,7 +392,7 @@ export const CustomerForm = ({
           <div className="drawer-footer-sticky">
             <button type="submit" className="btn-submit-main flex-1">
               <Save className="icon-md" />
-              <span>{editingRecord ? 'UPDATE CUSTOMER ENTRY' : 'SAVE CUSTOMER ENTRY'}</span>
+              <span>{editingRecord ? 'Update' : 'Save'}</span>
             </button>
 
             <button 

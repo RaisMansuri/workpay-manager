@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Printer, Phone, MapPin, Building2, Clock, RotateCcw, CheckCircle2, MessageSquare } from 'lucide-react';
+import { X, Printer, Phone, MapPin, Building2, Clock, RotateCcw, CheckCircle2, MessageSquare, Edit3 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
 import { WORK_STATUS } from '../constants/serviceTypes';
 import { smsService } from '../services/smsService';
@@ -23,21 +23,18 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
       case WORK_STATUS.PENDING:
         return (
           <span className="badge-lg status-badge-pending">
-            <Clock className="icon-xs" />
             Pending
           </span>
         );
       case WORK_STATUS.IN_PROGRESS:
         return (
           <span className="badge-lg status-badge-in-progress">
-            <RotateCcw className="icon-xs spin-slow" />
             In Progress
           </span>
         );
       case WORK_STATUS.COMPLETED:
         return (
           <span className="badge-lg status-badge-completed">
-            <CheckCircle2 className="icon-xs" />
             Completed
           </span>
         );
@@ -151,6 +148,7 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
               onEditRecord(record);
             }}
           >
+            <Edit3 className="icon-sm" />
             <span>Edit Record</span>
           </button>
         </div>
@@ -158,3 +156,5 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
     </div>
   );
 };
+
+export default CustomerDetailModal;

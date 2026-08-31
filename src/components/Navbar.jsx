@@ -1,7 +1,7 @@
 import React from 'react';
-import { Building2, RefreshCw, Download, Clock, UserPlus } from 'lucide-react';
+import { Building2, Download, Clock, UserPlus } from 'lucide-react';
 
-export const Navbar = ({ onResetDemo, onExportCSV, onOpenNewDrawer }) => {
+export const Navbar = ({ onExportCSV, onOpenNewDrawer }) => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, '0');
   const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -13,16 +13,12 @@ export const Navbar = ({ onResetDemo, onExportCSV, onOpenNewDrawer }) => {
       <div className="navbar-container">
         {/* Brand logo & titles */}
         <div className="brand-group">
-          <div className="brand-icon-wrapper">
+          <div className="brand-icon-wrapper" title="Seva Kendra Management System">
             <Building2 className="brand-icon" />
           </div>
-          <div>
+          <div className="brand-text-container">
             <div className="brand-title-row">
               <h1 className="brand-title">Seva Kendra Management System</h1>
-              <span className="badge-phase badge-supabase-live">
-                <span className="live-dot pulse-blue"></span>
-                Supabase PostgreSQL
-              </span>
             </div>
             <p className="brand-subtitle">
               Live Multi-User Customer & Service Workflow Portal
@@ -32,15 +28,16 @@ export const Navbar = ({ onResetDemo, onExportCSV, onOpenNewDrawer }) => {
 
         {/* Header Right Actions & Profile */}
         <div className="navbar-actions">
-          {/* Action button to open drawer */}
-          <button 
-            className="btn-header btn-header-primary"
+          {/* Temporarily commented out top header New Customer Entry button as requested
+          <button
+            className="btn-header btn-header-primary btn-new-entry-header"
             onClick={onOpenNewDrawer}
             title="Register a new customer record"
           >
             <UserPlus className="icon-sm" />
-            <span>+ New Customer Entry</span>
+            <span>New Customer Entry</span>
           </button>
+          */}
 
           {/* Admin Profile Area */}
           <div className="admin-profile-pill" title="Seva Kendra Admin Account">
@@ -56,22 +53,13 @@ export const Navbar = ({ onResetDemo, onExportCSV, onOpenNewDrawer }) => {
             <span>{todayDateStr}</span>
           </div>
 
-          <button 
-            className="btn-header"
-            onClick={onResetDemo}
-            title="Reset database to default sample records"
-          >
-            <RefreshCw className="icon-sm" />
-            <span>Reset Demo</span>
-          </button>
-
-          <button 
-            className="btn-header"
+          <button
+            className="btn-header btn-export-header"
             onClick={onExportCSV}
             title="Export live records to CSV file"
           >
             <Download className="icon-sm" />
-            <span>Export CSV</span>
+            <span className="btn-export-text">Export CSV</span>
           </button>
         </div>
       </div>
