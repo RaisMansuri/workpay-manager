@@ -1,0 +1,4 @@
+# Supabase Project Configuration for send-sms Edge Function
+
+[functions.send-sms]
+verify_jwt = false
