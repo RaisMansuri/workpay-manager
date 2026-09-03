@@ -107,28 +107,7 @@ export const Navbar = ({ profile, onLogout, onExportCSV, activeTab = 'dashboard'
         {/* Right Actions & Profile (Desktop) */}
         <div className="navbar-actions desktop-only-actions">
 
-          {/* Export CSV Button - Only visible to Admin on Dashboard */}
-          {isAdmin && activeTab === 'dashboard' && (
-            <button
-              type="button"
-              className="btn-nav btn-export"
-              onClick={handleExportClick}
-              disabled={isExporting}
-              title="Export customer records to CSV"
-            >
-              {isExporting ? (
-                <>
-                  <Loader2 className="icon-xs spinner-icon" />
-                  <span className="btn-text">Exporting...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="icon-xs" />
-                  <span className="btn-text">Export CSV</span>
-                </>
-              )}
-            </button>
-          )}
+
 
           {/* User Profile Capsule with Pipe & Direct Logout Button */}
           <div className="user-profile-capsule-direct">

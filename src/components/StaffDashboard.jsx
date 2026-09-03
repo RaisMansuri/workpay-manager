@@ -37,15 +37,28 @@ export const StaffDashboard = ({ profile, onLogout }) => {
     };
   }, [reloadData]);
 
-  // Filter customer records created by this logged-in staff member
-  const staffRecords = records.filter(r => {
-    if (!profile) return true;
-    if (!r.createdBy && !r.created_by) return true;
+  // Filter customer records created strictly by this logged-in staff member
+  const staffRecords = records.filter((r) => {
+    if (!profile) return false;
+    const creator = String(r.created_by || r.createdBy || '').trim();
+    
+    // 1. Exclude null / empty / unassigned records
+    if (!creator) return false;
+    
+    // 2. Exclude Admin created records
+    if (creator.toLowerCase() === 'admin' || creator.toLowerCase().includes('admin')) return false;
+
+    // 3. Show ONLY records created by this logged-in staff user (matching ID, email, or name)
+    const staffId = profile.id ? String(profile.id).toLowerCase() : '';
+    const staffEmail = profile.email ? String(profile.email).toLowerCase() : '';
+    const staffName = profile.full_name ? String(profile.full_name).toLowerCase() : '';
+
+    const creatorLower = creator.toLowerCase();
+
     return (
-      r.createdBy === profile.id || 
-      r.created_by === profile.id ||
-      (r.createdBy && profile.email && r.createdBy.toLowerCase() === profile.email.toLowerCase()) ||
-      (r.created_by && profile.email && r.created_by.toLowerCase() === profile.email.toLowerCase())
+      (staffId && creatorLower === staffId) ||
+      (staffEmail && creatorLower === staffEmail) ||
+      (staffName && creatorLower === staffName)
     );
   });
 
@@ -66,7 +79,13 @@ export const StaffDashboard = ({ profile, onLogout }) => {
   };
 
   const handleSaveRecord = async (record, isEdit) => {
-    const result = await customerStorage.saveRecordAsync(record);
+    const creatorName = profile?.full_name || profile?.email || 'Rahul';
+    const recordToSave = {
+      ...record,
+      created_by: isEdit ? (record.created_by || creatorName) : creatorName,
+      createdBy: isEdit ? (record.createdBy || creatorName) : creatorName
+    };
+    const result = await customerStorage.saveRecordAsync(recordToSave);
     if (result.success) {
       setRecords(result.records);
       setEditingRecord(null);

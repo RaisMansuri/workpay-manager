@@ -6,7 +6,8 @@ export const staffService = {
    */
   async getStaffListAsync() {
     if (!isSupabaseConfigured() || !supabase) {
-      return [];
+      const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
+      return cached ? JSON.parse(cached) : [];
     }
 
     try {
@@ -17,13 +18,19 @@ export const staffService = {
 
       if (error) {
         console.warn('Error fetching staff list from Supabase:', error.message);
-        return [];
+        const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
+        return cached ? JSON.parse(cached) : [];
+      }
+
+      if (data && data.length > 0 && typeof window !== 'undefined') {
+        localStorage.setItem('workpay_cached_staff_profiles', JSON.stringify(data));
       }
 
       return data || [];
     } catch (err) {
       console.error('Failed to get staff list:', err);
-      return [];
+      const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
+      return cached ? JSON.parse(cached) : [];
     }
   },
 
@@ -120,6 +127,17 @@ export const staffService = {
 
       if (profileError) {
         console.warn('Profiles table upsert notice:', profileError.message);
+
+        // Check if profile record was already created in profiles table by Supabase Auth Trigger
+        const freshList = await this.getStaffListAsync();
+        const existingStaff = freshList.find(
+          (s) => s.id === createdUser.id || (s.email && s.email.toLowerCase() === cleanEmail)
+        );
+
+        if (existingStaff) {
+          return { success: true, staff: existingStaff, staffList: freshList };
+        }
+
         if (profileError.message?.includes('row-level security') || profileError.code === '42501') {
           return { 
             success: false, 

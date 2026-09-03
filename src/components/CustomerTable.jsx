@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Search, Filter, Edit3, Trash2, Eye, Clock, RotateCcw,
+  Search, Filter, Edit3, Trash2, Eye, Clock, RotateCcw, Download,
   Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus, Info, X, Calendar, SlidersHorizontal, Users, User, ChevronDown, Check
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
@@ -189,11 +189,11 @@ const FilterPopover = ({
         style={
           !coords.isMobile
             ? {
-                position: 'fixed',
-                top: `${coords.top}px`,
-                right: `${coords.right}px`,
-                zIndex: 10000
-              }
+              position: 'fixed',
+              top: `${coords.top}px`,
+              right: `${coords.right}px`,
+              zIndex: 10000
+            }
             : {}
         }
       >
@@ -304,6 +304,7 @@ export const CustomerTable = ({
   onDelete,
   onViewDetails,
   onOpenNewDrawer,
+  onExportCSV,
   editingRecordId,
   userRole = 'admin',
   profile
@@ -348,6 +349,54 @@ export const CustomerTable = ({
     };
   }, []);
 
+  // Extract all unique staff users dynamically from DB profiles AND customer records
+  const uniqueStaffOptions = useMemo(() => {
+    const map = new Map();
+
+    // 1. Add staff from database profiles
+    (staffOptions || []).forEach((s) => {
+      if (s && s.role !== 'admin' && s.full_name !== 'Admin' && s.full_name !== 'Admin Manager') {
+        const idKey = s.id || s.email;
+        if (idKey) {
+          map.set(String(idKey).toLowerCase(), {
+            id: s.id || s.email,
+            name: s.full_name || s.email || 'Staff User'
+          });
+        }
+      }
+    });
+
+    // 2. Add creators from customer records
+    (records || []).forEach((r) => {
+      const creator = String(r.created_by || r.createdBy || '').trim();
+      if (
+        creator &&
+        creator.toLowerCase() !== 'admin' &&
+        !creator.toLowerCase().includes('admin')
+      ) {
+        const key = creator.toLowerCase();
+        if (!map.has(key)) {
+          const found = (staffOptions || []).find(
+            (s) => (s.id && String(s.id).toLowerCase() === key) || (s.email && s.email.toLowerCase() === key)
+          );
+
+          let displayName = found?.full_name || found?.email;
+          if (!displayName) {
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(creator);
+            displayName = isUUID ? 'Staff User' : (creator.includes('@') ? creator.split('@')[0] : creator);
+          }
+
+          map.set(key, {
+            id: creator,
+            name: displayName
+          });
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  }, [staffOptions, records]);
+
   // Close custom staff dropdown on outside click
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -359,21 +408,85 @@ export const CustomerTable = ({
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  // Helper for resolving Creator Staff User Name
+  // Helper for resolving Creator Staff User Name directly from matching profile ID in public.profiles
   const getStaffName = (creatorId) => {
     if (!creatorId) return 'Admin';
-    const found = staffOptions.find(
-      (s) => s.id === creatorId || (s.email && s.email.toLowerCase() === String(creatorId).toLowerCase())
+    const str = String(creatorId).trim();
+    if (str.toLowerCase() === 'admin' || str.toLowerCase().includes('admin')) {
+      return 'Admin';
+    }
+
+    // 1. Direct match by ID in staffOptions (from public.profiles table)
+    let found = (staffOptions || []).find(
+      (s) => s.id && String(s.id).toLowerCase() === str.toLowerCase()
     );
-    if (found) {
-      const name = found.full_name || found.email || 'Staff User';
-      return name === 'Admin Manager' ? 'Admin' : name;
+
+    // 2. Direct match by Email or Name in staffOptions
+    if (!found) {
+      found = (staffOptions || []).find(
+        (s) =>
+          (s.email && s.email.toLowerCase() === str.toLowerCase()) ||
+          (s.full_name && s.full_name.toLowerCase() === str.toLowerCase())
+      );
     }
-    if (profile && (profile.id === creatorId || profile.email === creatorId)) {
-      const name = profile.full_name || 'Admin';
-      return name === 'Admin Manager' ? 'Admin' : name;
+
+    // 3. Match from localStorage cached profiles
+    if (!found && typeof window !== 'undefined') {
+      try {
+        const cachedStr = localStorage.getItem('workpay_cached_staff_profiles');
+        if (cachedStr) {
+          const cachedProfiles = JSON.parse(cachedStr);
+          found = cachedProfiles.find(
+            (s) =>
+              (s.id && String(s.id).toLowerCase() === str.toLowerCase()) ||
+              (s.email && s.email.toLowerCase() === str.toLowerCase()) ||
+              (s.full_name && s.full_name.toLowerCase() === str.toLowerCase())
+          );
+        }
+      } catch (err) { /* ignore */ }
     }
-    return 'Staff User';
+
+    // Return full_name directly from public.profiles table
+    if (found?.full_name) {
+      return found.full_name;
+    }
+
+    if (found?.email) {
+      const prefix = found.email.split('@')[0];
+      return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    }
+
+    // 4. Match currently logged-in profile
+    if (profile) {
+      const pId = profile.id ? String(profile.id).toLowerCase() : '';
+      const pEmail = profile.email ? profile.email.toLowerCase() : '';
+      if (
+        (pId && str.toLowerCase() === pId) ||
+        (pEmail && str.toLowerCase() === pEmail)
+      ) {
+        if (profile.full_name) return profile.full_name;
+      }
+    }
+
+    // 5. If str is an email address
+    if (str.includes('@')) {
+      const prefix = str.split('@')[0];
+      return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    }
+
+    // 6. If str is a plain name string
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+    if (!isUUID && str.length > 0) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    // 7. Fallback for non-admin creator ID: resolve to staff full name or Staff User (NEVER Admin)
+    const staffObj = (staffOptions || []).find((s) => s.role !== 'admin' && s.full_name);
+    if (staffObj?.full_name) {
+      return staffObj.full_name;
+    }
+
+    return profile?.role === 'staff' ? (profile.full_name || 'Staff User') : 'Staff User';
   };
 
   // Ref for anchoring desktop filter popover
@@ -509,11 +622,34 @@ export const CustomerTable = ({
 
     const matchesDate = filterByDateOption(record.createdAt, selectedDateOption, fromDate, toDate);
 
-    const creator = record.createdBy || record.created_by;
-    const matchesStaff =
-      selectedStaff === 'All' ||
-      creator === selectedStaff ||
-      (creator && String(creator).toLowerCase() === String(selectedStaff).toLowerCase());
+    const creator = String(record.createdBy || record.created_by || '').trim();
+    let matchesStaff = selectedStaff === 'All';
+
+    if (!matchesStaff && creator) {
+      const creatorLower = creator.toLowerCase();
+      const selectedLower = selectedStaff.toLowerCase();
+
+      // Find selected staff profile object from staffOptions
+      const targetStaff = staffOptions.find(
+        (s) =>
+          (s.id && String(s.id).toLowerCase() === selectedLower) ||
+          (s.email && s.email.toLowerCase() === selectedLower) ||
+          (s.full_name && s.full_name.toLowerCase() === selectedLower)
+      );
+
+      if (targetStaff) {
+        const targetId = targetStaff.id ? String(targetStaff.id).toLowerCase() : '';
+        const targetEmail = targetStaff.email ? targetStaff.email.toLowerCase() : '';
+        const targetName = targetStaff.full_name ? targetStaff.full_name.toLowerCase() : '';
+
+        matchesStaff =
+          (targetId && creatorLower === targetId) ||
+          (targetEmail && creatorLower === targetEmail) ||
+          (targetName && creatorLower === targetName);
+      } else {
+        matchesStaff = creatorLower === selectedLower;
+      }
+    }
 
     return matchesSearch && matchesStatus && matchesService && matchesDate && matchesStaff;
   });
@@ -616,14 +752,28 @@ export const CustomerTable = ({
             )}
           </div>
 
-          <button
-            className="btn-new-entry"
-            onClick={onOpenNewDrawer}
-            title="Register a new customer record"
-          >
-            <UserPlus className="icon-sm" />
-            <span>New Entry</span>
-          </button>
+          <div className="table-actions-group">
+            {onExportCSV && effectiveRole === 'admin' && (
+              <button
+                type="button"
+                className="btn-export-table"
+                onClick={onExportCSV}
+                title="Export customer records to CSV file"
+              >
+                <Download className="icon-sm text-secondary" />
+                <span>Export CSV</span>
+              </button>
+            )}
+
+            <button
+              className="btn-new-entry"
+              onClick={onOpenNewDrawer}
+              title="Register a new customer record"
+            >
+              <UserPlus className="icon-sm" />
+              <span>New Entry</span>
+            </button>
+          </div>
         </div>
 
         {/* ROW 2: Filters Row (Status | Service | Date/Time | Staff Member) */}
@@ -697,13 +847,11 @@ export const CustomerTable = ({
                 aria-label="Filter by staff member"
               >
                 <option value="All">All Staff Users</option>
-                {staffOptions
-                  .filter((s) => s.role !== 'admin')
-                  .map((s) => (
-                    <option key={s.id || s.email} value={s.id || s.email}>
-                      {s.full_name || s.email}
-                    </option>
-                  ))}
+                {uniqueStaffOptions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
               </select>
             </div>
           )}

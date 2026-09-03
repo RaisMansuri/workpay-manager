@@ -220,7 +220,13 @@ export function App() {
   };
 
   const handleSaveRecord = async (record, isEdit) => {
-    const result = await customerStorage.saveRecordAsync(record);
+    const creatorName = profile?.full_name || 'Admin';
+    const recordToSave = {
+      ...record,
+      created_by: isEdit ? (record.created_by || creatorName) : creatorName,
+      createdBy: isEdit ? (record.createdBy || creatorName) : creatorName
+    };
+    const result = await customerStorage.saveRecordAsync(recordToSave);
     if (result.success) {
       setRecords(result.records);
       setEditingRecord(null);
@@ -394,6 +400,7 @@ export function App() {
                   onDelete={(record) => setDeletingRecord(record)}
                   onViewDetails={(record) => setViewingRecord(record)}
                   onOpenNewDrawer={handleOpenNewDrawer}
+                  onExportCSV={handleExportCSV}
                   editingRecordId={editingRecord?.id}
                 />
               </section>
