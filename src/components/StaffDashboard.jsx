@@ -97,7 +97,7 @@ export const StaffDashboard = ({ profile, onLogout }) => {
       if (smsRes.success) {
         showToast(`Customer entry saved! SMS Sent Successfully`, 'success');
       } else {
-        showToast(`Customer entry saved!`, 'info');
+        showToast(`Customer entry saved successfully!`, 'success');
       }
     } else {
       showToast(`Failed to save record: ${result.error}`, 'error');

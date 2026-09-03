@@ -6689,6 +6689,116 @@ button.btn-save-staff:hover {
   transform: translateY(-1px) !important;
 }
 
+/* Top Right Floating Toaster Notifications */
+.toast-notification {
+  position: fixed !important;
+  top: 1.5rem !important;
+  right: 1.5rem !important;
+  z-index: 999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.85rem !important;
+  min-width: 280px !important;
+  max-width: 420px !important;
+  padding: 0.85rem 1.15rem !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(12px) !important;
+  animation: toastSlideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes toastSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.toast-notification .toast-content {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.toast-notification .toast-icon {
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0 !important;
+}
+
+.toast-notification .toast-message {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+}
+
+.toast-notification .toast-close {
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0.7 !important;
+  transition: all 0.2s ease !important;
+}
+
+.toast-notification .toast-close:hover {
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* SUCCESS TOAST - Vibrant Green */
+.toast-notification.toast-success {
+  background: #f0fdf4 !important;
+  border: 1.5px solid #22c55e !important;
+  color: #15803d !important;
+}
+
+.toast-notification.toast-success .toast-icon {
+  color: #16a34a !important;
+}
+
+/* ERROR TOAST - Vibrant Red */
+.toast-notification.toast-error {
+  background: #fef2f2 !important;
+  border: 1.5px solid #ef4444 !important;
+  color: #b91c1c !important;
+}
+
+.toast-notification.toast-error .toast-icon {
+  color: #dc2626 !important;
+}
+
+/* WARNING TOAST - Amber Gold */
+.toast-notification.toast-warning {
+  background: #fffbeb !important;
+  border: 1.5px solid #f59e0b !important;
+  color: #b45309 !important;
+}
+
+.toast-notification.toast-warning .toast-icon {
+  color: #d97706 !important;
+}
+
+/* INFO TOAST - Soft Blue */
+.toast-notification.toast-info {
+  background: #eff6ff !important;
+  border: 1.5px solid #3b82f6 !important;
+  color: #1d4ed8 !important;
+}
+
+.toast-notification.toast-info .toast-icon {
+  color: #2563eb !important;
+}
+
 
 
 
