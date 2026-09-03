@@ -27,25 +27,32 @@ const mapRowToRecord = (row) => ({
   paidAmount: Number(row.paid_amount) || 0,
   remainingBalance: Number(row.remaining_balance) || 0,
   createdAt: row.created_at,
-  updatedAt: row.updated_at
+  updatedAt: row.updated_at,
+  createdBy: row.created_by || null,
+  updatedBy: row.updated_by || null
 });
 
 /**
  * Format frontend camelCase object to database snake_case row
  */
-const mapRecordToRow = (record) => ({
-  id: record.id,
-  customer_name: record.customerName,
-  mobile_number: record.mobileNumber,
-  address: record.address || '',
-  service_type: record.serviceType,
-  work_description: record.workDescription || '',
-  status: record.status,
-  total_amount: Number(record.totalAmount) || 0,
-  paid_amount: Number(record.paidAmount) || 0,
-  remaining_balance: Number(record.remainingBalance) || 0,
-  updated_at: new Date().toISOString()
-});
+const mapRecordToRow = (record) => {
+  const row = {
+    id: record.id,
+    customer_name: record.customerName,
+    mobile_number: record.mobileNumber,
+    address: record.address || '',
+    service_type: record.serviceType,
+    work_description: record.workDescription || '',
+    status: record.status,
+    total_amount: Number(record.totalAmount) || 0,
+    paid_amount: Number(record.paidAmount) || 0,
+    remaining_balance: Number(record.remainingBalance) || 0,
+    updated_at: new Date().toISOString()
+  };
+  if (record.createdBy) row.created_by = record.createdBy;
+  if (record.updatedBy) row.updated_by = record.updatedBy;
+  return row;
+};
 
 /**
  * Service to manage records strictly in PostgreSQL Supabase Cloud Database.
@@ -78,15 +85,11 @@ export const customerStorage = {
         return [];
       }
 
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data)) {
         return data.map(mapRowToRecord);
       }
 
-      // If database table is empty, seed demo records to Supabase PostgreSQL once
-      const demoData = getInitialDemoData();
-      const rowsToInsert = demoData.map(mapRecordToRow);
-      await supabase.from('customer_records').insert(rowsToInsert);
-      return demoData;
+      return [];
     } catch (err) {
       console.error('Error fetching records from Supabase:', err);
       return [];
@@ -106,6 +109,15 @@ export const customerStorage = {
     const paid = Number(record.paidAmount) || 0;
     const remainingBalance = Math.max(0, total - paid);
 
+    // Retrieve active logged-in user session UUID
+    let currentUserId = null;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      currentUserId = session?.user?.id || null;
+    } catch (e) {
+      /* ignore auth session lookup error */
+    }
+
     const formattedRecord = {
       ...record,
       totalAmount: total,
@@ -118,6 +130,10 @@ export const customerStorage = {
       const row = mapRecordToRow(formattedRecord);
       if (!record.createdAt) {
         row.created_at = nowISO;
+        if (currentUserId) row.created_by = currentUserId;
+      }
+      if (currentUserId) {
+        row.updated_by = currentUserId;
       }
 
       const { data, error } = await supabase
@@ -187,21 +203,31 @@ export const customerStorage = {
   subscribeToRealtime: (onDataChange) => {
     if (!supabase) return () => {};
 
-    const channel = supabase
-      .channel('public:customer_records')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'customer_records' },
-        async () => {
-          const updated = await customerStorage.getRecordsAsync();
-          onDataChange(updated);
-        }
-      )
-      .subscribe();
+    try {
+      const channelName = `customer-records-sync-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      const channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'customer_records' },
+          async () => {
+            const updated = await customerStorage.getRecordsAsync();
+            onDataChange(updated);
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      return () => {
+        try {
+          supabase.removeChannel(channel);
+        } catch (e) {
+          /* ignore cleanup errors */
+        }
+      };
+    } catch (err) {
+      console.warn('Realtime subscription notice:', err);
+      return () => {};
+    }
   },
 
   /**
@@ -230,7 +256,10 @@ export const customerStorage = {
     let totalPendingBalance = 0;
     let completedServices = 0;
 
-    records.forEach((record) => {
+    const list = Array.isArray(records) ? records : [];
+
+    list.forEach((record) => {
+      if (!record) return;
       if (isToday(record.createdAt)) {
         todaysEntries += 1;
         todaysCollection += Number(record.paidAmount) || 0;

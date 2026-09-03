@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   UserPlus, Save, RotateCcw, Calculator, FileText, Phone, User, MapPin, 
-  IndianRupee, CheckCircle2, Clock, Layers, CreditCard, X 
+  IndianRupee, CheckCircle2, Clock, Layers, CreditCard, X, Loader2 
 } from 'lucide-react';
 import { SEVA_SERVICES, WORK_STATUS } from '../constants/serviceTypes';
 import { formatCurrency, generateNextCustomerId } from '../utils/formatters';
@@ -14,6 +14,7 @@ export const CustomerForm = ({
   onCancelEdit, 
   existingRecords = [] 
 }) => {
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     id: '',
     customerName: '',
@@ -105,25 +106,25 @@ export const CustomerForm = ({
     const newErrors = {};
 
     if (!formData.customerName.trim()) {
-      newErrors.customerName = 'Customer Name is required';
+      newErrors.customerName = 'This field is required';
     }
 
     if (!formData.mobileNumber.trim()) {
-      newErrors.mobileNumber = 'Mobile Number is required';
+      newErrors.mobileNumber = 'This field is required';
     } else if (!/^[0-9]{10}$/.test(formData.mobileNumber.trim())) {
       newErrors.mobileNumber = 'Please enter a valid 10-digit mobile number';
     }
 
     if (isCustomService && !formData.customServiceType.trim()) {
-      newErrors.customServiceType = 'Please specify custom service type';
+      newErrors.customServiceType = 'This field is required';
     }
 
     if (formData.totalAmount === '' || isNaN(formData.totalAmount) || Number(formData.totalAmount) < 0) {
-      newErrors.totalAmount = 'Valid Total Amount is required';
+      newErrors.totalAmount = 'This field is required';
     }
 
     if (formData.paidAmount === '' || isNaN(formData.paidAmount) || Number(formData.paidAmount) < 0) {
-      newErrors.paidAmount = 'Valid Paid Amount is required';
+      newErrors.paidAmount = 'This field is required';
     } else if (Number(formData.paidAmount) > Number(formData.totalAmount)) {
       newErrors.paidAmount = 'Paid Amount cannot exceed Total Amount';
     }
@@ -132,9 +133,15 @@ export const CustomerForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+      setTimeout(() => {
+        const firstInvalid = document.querySelector('.drawer-form .is-invalid');
+        if (firstInvalid) firstInvalid.focus();
+      }, 50);
+      return;
+    }
 
     const finalServiceType = isCustomService 
       ? formData.customServiceType.trim() 
@@ -153,7 +160,12 @@ export const CustomerForm = ({
       remainingBalance: remainingBalance
     };
 
-    onSave(recordToSave, !!editingRecord);
+    setIsSaving(true);
+    try {
+      await onSave(recordToSave, !!editingRecord);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -175,6 +187,12 @@ export const CustomerForm = ({
         {/* Drawer Form Body */}
         <form onSubmit={handleSubmit} className="drawer-form">
           <div className="drawer-body-scroll">
+            {Object.keys(errors).length > 0 && (
+              <div className="alert-box alert-error mb-4" style={{ display: 'flex', alignItems: 'center', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.75rem 1rem', borderRadius: '10px', color: '#dc2626', fontSize: '0.85rem', fontWeight: 600 }}>
+                <span style={{ marginRight: '0.5rem' }}>⚠️</span>
+                <span>Please fill in all required fields marked with * before saving.</span>
+              </div>
+            )}
             {/* SECTION 1: Customer Details */}
             <div className="form-section">
               <div className="form-section-title-row">
@@ -390,9 +408,18 @@ export const CustomerForm = ({
 
           {/* Sticky Drawer Footer */}
           <div className="drawer-footer-sticky">
-            <button type="submit" className="btn-submit-main flex-1">
-              <Save className="icon-md" />
-              <span>{editingRecord ? 'Update' : 'Save'}</span>
+            <button type="submit" className="btn-submit-main flex-1" disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="icon-md spinner-icon" />
+                  <span>{editingRecord ? 'Updating...' : 'Saving...'}</span>
+                </>
+              ) : (
+                <>
+                  <Save className="icon-md" />
+                  <span>{editingRecord ? 'Update' : 'Save'}</span>
+                </>
+              )}
             </button>
 
             <button 

@@ -14,8 +14,25 @@ export const isSupabaseConfigured = () => {
   );
 };
 
+// Primary Supabase Client (Maintains active session)
 export const supabase = isSupabaseConfigured()
   ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: false }
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    })
+  : null;
+
+// Secondary Supabase Client Singleton (Initialized once to prevent GoTrueClient warning)
+export const secondarySupabase = isSupabaseConfigured()
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storageKey: 'supabase.secondary.auth.token'
+      }
     })
   : null;

@@ -1,8 +1,19 @@
-import React from 'react';
-import { AlertTriangle, Trash2, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertTriangle, Trash2, X, Loader2 } from 'lucide-react';
 
 export const DeleteConfirmModal = ({ record, onClose, onConfirm }) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+
   if (!record) return null;
+
+  const handleConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await onConfirm(record.id);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -15,7 +26,7 @@ export const DeleteConfirmModal = ({ record, onClose, onConfirm }) => {
               <p className="text-muted text-xs">This action cannot be undone</p>
             </div>
           </div>
-          <button className="modal-close-btn" onClick={onClose}>
+          <button className="modal-close-btn" onClick={onClose} disabled={isDeleting}>
             <X className="icon-md" />
           </button>
         </div>
@@ -32,15 +43,26 @@ export const DeleteConfirmModal = ({ record, onClose, onConfirm }) => {
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>
+          <button className="btn btn-secondary" onClick={onClose} disabled={isDeleting}>
             Cancel
           </button>
-          <button className="btn btn-danger" onClick={() => onConfirm(record.id)}>
-            <Trash2 className="icon-sm" />
-            <span>Delete Entry</span>
+          <button className="btn btn-danger" onClick={handleConfirm} disabled={isDeleting}>
+            {isDeleting ? (
+              <>
+                <Loader2 className="icon-sm spinner-icon" />
+                <span>Deleting...</span>
+              </>
+            ) : (
+              <>
+                <Trash2 className="icon-sm" />
+                <span>Delete Entry</span>
+              </>
+            )}
           </button>
         </div>
       </div>
     </div>
   );
 };
+
+export default DeleteConfirmModal;

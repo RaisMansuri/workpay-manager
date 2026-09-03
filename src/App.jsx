@@ -6,10 +6,25 @@ import { CustomerTable } from './components/CustomerTable';
 import { CustomerDetailModal } from './components/CustomerDetailModal';
 import { DeleteConfirmModal } from './components/DeleteConfirmModal';
 import { Toast } from './components/Toast';
+import { LoginPage } from './components/LoginPage';
+import { StaffDashboard } from './components/StaffDashboard';
+import { StaffManagement } from './components/StaffManagement';
 import { customerStorage } from './services/customerStorage';
 import { smsService } from './services/smsService';
+import { authService } from './services/authService';
+import { Building2, Loader2 } from 'lucide-react';
 
 export function App() {
+  // Authentication & Profile State
+  const [session, setSession] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [loginInitialError, setLoginInitialError] = useState('');
+
+  // Simple path routing state
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  // Application Data State
   const [records, setRecords] = useState([]);
   const [editingRecord, setEditingRecord] = useState(null);
   const [viewingRecord, setViewingRecord] = useState(null);
@@ -17,22 +32,161 @@ export function App() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Reload records asynchronously from Supabase PostgreSQL / Storage
-  const reloadData = useCallback(async () => {
-    const loaded = await customerStorage.getRecordsAsync();
-    setRecords(loaded);
+  // Navigation helper
+  const navigate = useCallback((path) => {
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, '', path);
+    }
+    setCurrentPath(path);
   }, []);
 
-  // Initial load + Real-Time Sync event listeners & Supabase Realtime Subscription
+  // Listen for browser Back/Forward navigation
   useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Check and restore Supabase Auth session on initial load
+  useEffect(() => {
+    let isMounted = true;
+    const checkAuth = async () => {
+      try {
+        const authResult = await authService.getSessionAndProfile();
+        if (isMounted) {
+          if (authResult.session && authResult.profile) {
+            setSession(authResult.session);
+            setProfile(authResult.profile);
+
+            // Redirect logged-in users away from /login or default root
+            const path = window.location.pathname;
+            if (path === '/' || path === '/login') {
+              const target = authResult.profile.role === 'admin' ? '/admin/dashboard' : '/staff/dashboard';
+              navigate(target);
+            }
+          } else {
+            setSession(null);
+            setProfile(null);
+            if (authResult.isInactive || authResult.error) {
+              setLoginInitialError(authResult.error || 'Your account has been deactivated. Please contact the administrator.');
+            }
+            navigate('/login');
+          }
+        }
+      } catch (err) {
+        console.error('Session check failed:', err);
+      } finally {
+        if (isMounted) {
+          setIsCheckingAuth(false);
+        }
+      }
+    };
+
+    checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate]);
+
+  // Handle successful login
+  const handleLoginSuccess = (user, userProfile) => {
+    setLoginInitialError('');
+    setSession({ user });
+    setProfile(userProfile);
+
+    // Redirect according to role
+    if (userProfile.role === 'admin') {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/staff/dashboard');
+    }
+  };
+
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Handle Logout with Centered Loading Overlay & Silent Background
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      await authService.signOut(profile?.id);
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setSession(null);
+      setProfile(null);
+      setRecords([]);
+      setLoginInitialError('');
+      setIsLoggingOut(false);
+      navigate('/login');
+    }
+  };
+
+  // Real-time monitoring of logged-in user profile status (e.g. immediate deactivation by admin)
+  useEffect(() => {
+    if (!session || !profile || !profile.id) return;
+
+    const unsubscribe = authService.subscribeToProfileChanges(profile.id, (updatedProfile) => {
+      if (updatedProfile && updatedProfile.status === 'inactive') {
+        setSession(null);
+        setProfile(null);
+        setRecords([]);
+        setLoginInitialError('Your account has been deactivated. Please contact the administrator.');
+        navigate('/login');
+      } else if (updatedProfile) {
+        setProfile(updatedProfile);
+      }
+    });
+
+    const checkDemoDeactivation = () => {
+      try {
+        const raw = localStorage.getItem('workpay_demo_staff_members');
+        if (raw) {
+          const list = JSON.parse(raw);
+          const current = list.find(s => s.id === profile.id || (s.email && s.email.toLowerCase() === profile.email?.toLowerCase()));
+          if (current && current.status === 'inactive') {
+            setSession(null);
+            setProfile(null);
+            setRecords([]);
+            setLoginInitialError('Your account has been deactivated. Please contact the administrator.');
+            navigate('/login');
+          }
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    };
+
+    window.addEventListener('storage', checkDemoDeactivation);
+    window.addEventListener(customerStorage.DB_CHANGE_EVENT, checkDemoDeactivation);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', checkDemoDeactivation);
+      window.removeEventListener(customerStorage.DB_CHANGE_EVENT, checkDemoDeactivation);
+    };
+  }, [session, profile, navigate]);
+
+  // Reload records from Supabase
+  const reloadData = useCallback(async () => {
+    if (!profile) return;
+    const loaded = await customerStorage.getRecordsAsync();
+    setRecords(loaded);
+  }, [profile]);
+
+  // Real-Time Sync & Subscriptions
+  useEffect(() => {
+    if (!session || !profile) return;
+
     reloadData();
 
-    // 1. Supabase Realtime Subscription for PostgreSQL changes across all devices/clients
     const unsubscribeSupabase = customerStorage.subscribeToRealtime((updatedRecords) => {
       setRecords(updatedRecords);
     });
 
-    // 2. Local window event listener for same-tab / multi-tab storage events
     const handleRealTimeSync = () => {
       reloadData();
     };
@@ -45,65 +199,51 @@ export function App() {
       window.removeEventListener('storage', handleRealTimeSync);
       window.removeEventListener(customerStorage.DB_CHANGE_EVENT, handleRealTimeSync);
     };
-  }, [reloadData]);
+  }, [session, profile, reloadData]);
 
-  // Compute dynamic KPI summary metrics
+  // Computedynamic KPI summary metrics
   const stats = customerStorage.getSummaryStats(records);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
   };
 
-  // Open drawer for a new customer entry
+  // Drawer & Form Handlers
   const handleOpenNewDrawer = () => {
     setEditingRecord(null);
     setIsDrawerOpen(true);
   };
 
-  // Handle Close Drawer
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
     setEditingRecord(null);
   };
 
-  // Handle Save (Add or Edit)
   const handleSaveRecord = async (record, isEdit) => {
-    // 1. First save customer record in Supabase
     const result = await customerStorage.saveRecordAsync(record);
     if (result.success) {
       setRecords(result.records);
       setEditingRecord(null);
-      setIsDrawerOpen(false); // Automatically close sliding drawer after successful save
+      setIsDrawerOpen(false);
 
       const savedRecord = result.record || record;
-
-      // 2. Trigger Supabase Edge Function to send SMS to customer's mobile_number
       const smsRes = await smsService.sendCustomerSmsNotification(savedRecord);
 
       if (smsRes.success) {
-        showToast(`Customer entry saved! SMS Sent Successfully to ${smsRes.recipient}`, 'success');
-      } else if (smsRes.status === 'SMS Pending / Demo Mode') {
-        showToast(`Customer entry saved! (SMS Status: SMS Pending / Demo Mode)`, 'info');
+        showToast(`Customer entry saved! SMS Sent Successfully`, 'success');
       } else {
-        showToast(`Customer entry saved! (SMS Status: ${smsRes.error || 'SMS Failed'})`, 'info');
+        showToast(`Customer entry saved!`, 'info');
       }
     } else {
       showToast(`Failed to save record: ${result.error}`, 'error');
     }
   };
 
-  // Handle Edit Action from table row
   const handleStartEdit = (record) => {
     setEditingRecord(record);
     setIsDrawerOpen(true);
   };
 
-  const handleCancelEdit = () => {
-    setEditingRecord(null);
-    setIsDrawerOpen(false);
-  };
-
-  // Handle Delete Action
   const handleConfirmDelete = async (id) => {
     const targetRecord = records.find(r => r.id === id);
     const result = await customerStorage.deleteRecordAsync(id);
@@ -116,8 +256,8 @@ export function App() {
       }
       showToast(
         targetRecord 
-          ? `Customer record for ${targetRecord.customerName} deleted from DB.`
-          : 'Customer record deleted from DB.', 
+          ? `Customer record for ${targetRecord.customerName} deleted.`
+          : 'Customer record deleted.', 
         'info'
       );
     } else {
@@ -125,25 +265,13 @@ export function App() {
     }
   };
 
-  // Handle Reset Demo Data
-  const handleResetDemo = async () => {
-    if (window.confirm('Reset database back to standard sample records?')) {
-      const demoRecords = await customerStorage.resetToDemoDataAsync();
-      setRecords(demoRecords);
-      setEditingRecord(null);
-      setIsDrawerOpen(false);
-      showToast('Database reset to sample demo customer records.', 'info');
-    }
-  };
-
-  // CSV Export utility
   const handleExportCSV = () => {
     if (records.length === 0) {
       showToast('No records available to export.', 'info');
       return;
     }
 
-    const headers = ['Customer Name', 'Mobile Number', 'Address', 'Service Type', 'Work Description', 'Work Status', 'Total Amount (INR)', 'Paid Amount (INR)', 'Remaining Balance (INR)', 'Created Date'];
+    const headers = ['Customer Name', 'Mobile Number', 'Address', 'Service Type', 'Work Description', 'Work Status', 'Total Amount', 'Paid Amount', 'Remaining Balance', 'Created Date'];
     
     const rows = records.map(r => [
       `"${(r.customerName || '').replace(/"/g, '""')}"`,
@@ -159,9 +287,8 @@ export function App() {
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', encodeURI(csvContent));
     link.setAttribute('download', `seva_kendra_records_${new Date().toISOString().slice(0,10)}.csv`);
     document.body.appendChild(link);
     link.click();
@@ -170,31 +297,109 @@ export function App() {
     showToast(`Exported ${records.length} customer records to CSV file.`, 'success');
   };
 
+  // Handle role-based URL redirection safely in useEffect
+  useEffect(() => {
+    if (!session || !profile) return;
+    const userRole = (profile.role || '').toLowerCase();
+
+    if (userRole === 'staff' && currentPath.startsWith('/admin')) {
+      navigate('/staff/dashboard');
+    } else if (userRole === 'admin' && currentPath.startsWith('/staff')) {
+      navigate('/admin/dashboard');
+    }
+  }, [session, profile, currentPath, navigate]);
+
+  // 1. Initial Auth Loading Screen
+  if (isCheckingAuth) {
+    return (
+      <div className="auth-loading-screen">
+        <div className="auth-loading-content">
+          <div className="brand-icon-wrapper large-icon">
+            <Building2 className="brand-icon" />
+          </div>
+          <h2 className="login-brand-title">Seva Kendra Management System</h2>
+          <div className="loading-status">
+            <Loader2 className="icon-md spinner-icon text-primary" />
+            <span>Verifying Session & Security Permissions...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated -> Show Login Page
+  if (!session || !profile) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} initialError={loginInitialError} />;
+  }
+
+  const userRole = (profile.role || 'staff').toLowerCase();
+
+  // 3. Staff Role Protection: Render Staff Dashboard
+  if (userRole === 'staff') {
+    return (
+      <>
+        <StaffDashboard
+          profile={profile}
+          onLogout={handleLogout}
+        />
+        {isLoggingOut && (
+          <div className="logout-loading-overlay animate-fade-in">
+            <div className="logout-loading-card animate-scale-up">
+              <div className="brand-icon-wrapper large-icon mb-3">
+                <Building2 className="brand-icon" />
+              </div>
+              <h3 className="logout-title">Logging out...</h3>
+              <div className="loading-status mt-2">
+                <Loader2 className="icon-md spinner-icon text-primary" />
+                <span>Closing secure portal session</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // 4. Admin Role Access: Render full Admin Dashboard or Staff Management
+  const isStaffManagement = currentPath === '/admin/staff';
+
   return (
     <div className="app-layout">
-      {/* Top Navbar Header with + New Entry Button */}
+      {/* Top Navbar Header with Admin Profile, Navigation & Logout */}
       <Navbar 
+        profile={profile}
+        onLogout={handleLogout}
         onExportCSV={handleExportCSV}
         onOpenNewDrawer={handleOpenNewDrawer}
+        activeTab={isStaffManagement ? 'staff' : 'dashboard'}
+        onTabChange={(tab) => navigate(tab === 'staff' ? '/admin/staff' : '/admin/dashboard')}
       />
 
       <main className="main-container">
-        {/* Dashboard Summary KPI Cards */}
-        <SummaryCards stats={stats} />
+        {isStaffManagement ? (
+          <StaffManagement profile={profile} />
+        ) : (
+          <>
+            {/* Dashboard Summary KPI Cards */}
+            <SummaryCards stats={stats} />
 
-        {/* Full-Width Dashboard Table Layout */}
-        <div className="dashboard-grid">
-          <section className="column-full">
-            <CustomerTable
-              records={records}
-              onEdit={handleStartEdit}
-              onDelete={(record) => setDeletingRecord(record)}
-              onViewDetails={(record) => setViewingRecord(record)}
-              onOpenNewDrawer={handleOpenNewDrawer}
-              editingRecordId={editingRecord?.id}
-            />
-          </section>
-        </div>
+            {/* Full-Width Dashboard Table Layout */}
+            <div className="dashboard-grid">
+              <section className="column-full">
+                <CustomerTable
+                  records={records}
+                  profile={profile}
+                  userRole="admin"
+                  onEdit={handleStartEdit}
+                  onDelete={(record) => setDeletingRecord(record)}
+                  onViewDetails={(record) => setViewingRecord(record)}
+                  onOpenNewDrawer={handleOpenNewDrawer}
+                  editingRecordId={editingRecord?.id}
+                />
+              </section>
+            </div>
+          </>
+        )}
       </main>
 
       {/* Right-Side Sliding Drawer Form */}
@@ -203,7 +408,7 @@ export function App() {
         onClose={handleCloseDrawer}
         editingRecord={editingRecord}
         onSave={handleSaveRecord}
-        onCancelEdit={handleCancelEdit}
+        onCancelEdit={() => { setEditingRecord(null); setIsDrawerOpen(false); }}
         existingRecords={records}
       />
 
@@ -225,6 +430,22 @@ export function App() {
       )}
 
       <Toast toast={toast} onClose={() => setToast(null)} />
+
+      {/* Full-Screen Logout Loading Overlay (Silent Background) */}
+      {isLoggingOut && (
+        <div className="logout-loading-overlay animate-fade-in">
+          <div className="logout-loading-card animate-scale-up">
+            <div className="brand-icon-wrapper large-icon mb-3">
+              <Building2 className="brand-icon" />
+            </div>
+            <h3 className="logout-title">Logging out...</h3>
+            <div className="loading-status mt-2">
+              <Loader2 className="icon-md spinner-icon text-primary" />
+              <span>Closing secure portal session</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

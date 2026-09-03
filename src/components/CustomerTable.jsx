@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Search, Filter, Edit3, Trash2, Eye, Clock, RotateCcw,
-  Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus, Info, X, Calendar, SlidersHorizontal
+  Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus, Info, X, Calendar, SlidersHorizontal, Users, User, ChevronDown, Check
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
 import { WORK_STATUS, SEVA_SERVICES } from '../constants/serviceTypes';
+import { staffService } from '../services/staffService';
 
 // Reusable Service Info Tooltip Component
 const ServiceInfoTooltip = ({ tooltipId, activeTooltipId, setActiveTooltipId, serviceType, workDescription }) => {
@@ -303,14 +304,77 @@ export const CustomerTable = ({
   onDelete,
   onViewDetails,
   onOpenNewDrawer,
-  editingRecordId
+  editingRecordId,
+  userRole = 'admin',
+  profile
 }) => {
+  const effectiveRole = profile?.role || userRole;
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedService, setSelectedService] = useState('All');
   const [selectedDateOption, setSelectedDateOption] = useState('All Time');
+  const [selectedStaff, setSelectedStaff] = useState('All');
+  const [staffOptions, setStaffOptions] = useState([]);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+
+  const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
+  const staffDropdownRef = useRef(null);
+
+  // Fetch staff options from database & subscribe to Realtime updates
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStaff = async () => {
+      try {
+        const data = await staffService.getStaffListAsync();
+        if (isMounted) {
+          setStaffOptions(data || []);
+        }
+      } catch (err) {
+        console.error('Failed to load staff list for filter:', err);
+      }
+    };
+    fetchStaff();
+
+    const unsubscribe = staffService.subscribeToRealtime((updated) => {
+      if (isMounted && updated) {
+        setStaffOptions(updated);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  // Close custom staff dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (staffDropdownRef.current && !staffDropdownRef.current.contains(e.target)) {
+        setIsStaffDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Helper for resolving Creator Staff User Name
+  const getStaffName = (creatorId) => {
+    if (!creatorId) return 'Admin';
+    const found = staffOptions.find(
+      (s) => s.id === creatorId || (s.email && s.email.toLowerCase() === String(creatorId).toLowerCase())
+    );
+    if (found) {
+      const name = found.full_name || found.email || 'Staff User';
+      return name === 'Admin Manager' ? 'Admin' : name;
+    }
+    if (profile && (profile.id === creatorId || profile.email === creatorId)) {
+      const name = profile.full_name || 'Admin';
+      return name === 'Admin Manager' ? 'Admin' : name;
+    }
+    return 'Staff User';
+  };
 
   // Ref for anchoring desktop filter popover
   const desktopFilterBtnRef = useRef(null);
@@ -338,7 +402,7 @@ export const CustomerTable = ({
   // Reset to Page 1 when filters or search change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedStatus, selectedService, selectedDateOption, fromDate, toDate, rowsPerPage]);
+  }, [searchTerm, selectedStatus, selectedService, selectedDateOption, selectedStaff, fromDate, toDate, rowsPerPage]);
 
   // Helper for generating Customer Initials Avatar
   const getInitials = (name) => {
@@ -427,7 +491,8 @@ export const CustomerTable = ({
   };
 
   // Filter records based on Search, Status, Service Type, and Date Filter
-  const filteredRecords = records.filter((record) => {
+  const filteredRecords = (records || []).filter((record) => {
+    if (!record) return false;
     const query = searchTerm.trim().toLowerCase();
     const matchesSearch =
       !query ||
@@ -444,13 +509,20 @@ export const CustomerTable = ({
 
     const matchesDate = filterByDateOption(record.createdAt, selectedDateOption, fromDate, toDate);
 
-    return matchesSearch && matchesStatus && matchesService && matchesDate;
+    const creator = record.createdBy || record.created_by;
+    const matchesStaff =
+      selectedStaff === 'All' ||
+      creator === selectedStaff ||
+      (creator && String(creator).toLowerCase() === String(selectedStaff).toLowerCase());
+
+    return matchesSearch && matchesStatus && matchesService && matchesDate && matchesStaff;
   });
 
   const activeFilterCount =
     (selectedStatus !== 'All' ? 1 : 0) +
     (selectedService !== 'All' ? 1 : 0) +
-    (selectedDateOption !== 'All Time' ? 1 : 0);
+    (selectedDateOption !== 'All Time' ? 1 : 0) +
+    (selectedStaff !== 'All' ? 1 : 0);
 
   const handleApplyMobileFilters = ({ status, service, dateOption, fromDate: fD, toDate: tD }) => {
     setSelectedStatus(status);
@@ -465,6 +537,7 @@ export const CustomerTable = ({
     setSelectedStatus('All');
     setSelectedService('All');
     setSelectedDateOption('All Time');
+    setSelectedStaff('All');
     setFromDate('');
     setToDate('');
     setIsFilterPanelOpen(false);
@@ -525,8 +598,8 @@ export const CustomerTable = ({
     <div className="card table-card">
       {/* Table Top Controls Bar */}
       <div className="table-header-controls">
-        {/* ROW 1 (Desktop > 768px): Search on Left | Filters + New Entry on Right */}
-        <div className="desktop-controls-top">
+        {/* ROW 1: Search Left | New Entry Right */}
+        <div className="filter-row-1">
           <div className="search-box">
             <Search className="search-icon" />
             <input
@@ -543,86 +616,26 @@ export const CustomerTable = ({
             )}
           </div>
 
-          <div className="desktop-top-actions">
-            {/* Temporarily commented out desktop Filters button as requested
-            <button
-              ref={desktopFilterBtnRef}
-              type="button"
-              className={`btn-mobile-filter-trigger ${activeFilterCount > 0 ? 'has-active-filters' : ''}`}
-              onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-              title="Open Advanced Filters"
-            >
-              <SlidersHorizontal className="icon-xs" />
-              <span>Filters</span>
-              {activeFilterCount > 0 && (
-                <span className="filter-active-badge">({activeFilterCount})</span>
-              )}
-            </button>
-            */}
-
-            <button
-              className="btn-new-entry"
-              onClick={onOpenNewDrawer}
-              title="Register a new customer record"
-            >
-              <UserPlus className="icon-sm" />
-              <span>New Entry</span>
-            </button>
-          </div>
+          <button
+            className="btn-new-entry"
+            onClick={onOpenNewDrawer}
+            title="Register a new customer record"
+          >
+            <UserPlus className="icon-sm" />
+            <span>New Entry</span>
+          </button>
         </div>
 
-        {/* Mobile Filter & Search Controls (≤ 768px) */}
-        <div className="mobile-controls-row">
-          <div className="search-box mobile-search-box">
-            <Search className="search-icon" />
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search customer or mobile..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button className="clear-search-btn" onClick={() => setSearchTerm('')}>
-                ×
-              </button>
-            )}
-          </div>
-
-          <div className="mobile-buttons-row">
-            <button
-              ref={mobileFilterBtnRef}
-              type="button"
-              className={`btn-mobile-filter-trigger ${activeFilterCount > 0 ? 'has-active-filters' : ''}`}
-              onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-            >
-              <SlidersHorizontal className="icon-xs" />
-              <span>Filters</span>
-              {activeFilterCount > 0 && (
-                <span className="filter-active-badge">({activeFilterCount})</span>
-              )}
-            </button>
-
-            <button
-              className="btn-new-entry"
-              onClick={onOpenNewDrawer}
-              title="Register a new customer record"
-            >
-              <UserPlus className="icon-sm" />
-              <span>New Entry</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ROW 2 (Desktop > 768px): Filter Controls Dropdowns */}
-        <div className="table-controls-right desktop-filters-row">
+        {/* ROW 2: Filters Row (Status | Service | Date/Time | Staff Member) */}
+        <div className="filter-row-2">
           {/* Status Dropdown Filter */}
-          <div className="service-filter-wrapper">
-            <Clock className="input-icon" />
+          <div className="clean-filter-control">
+            <Clock className="filter-control-icon" />
             <select
-              className="form-select service-select-sm"
+              className="clean-filter-select"
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
+              aria-label="Filter by work status"
             >
               <option value="All">All Statuses ({records.length})</option>
               <option value={WORK_STATUS.PENDING}>
@@ -638,12 +651,13 @@ export const CustomerTable = ({
           </div>
 
           {/* Service Dropdown Filter */}
-          <div className="service-filter-wrapper">
-            <Filter className="input-icon" />
+          <div className="clean-filter-control">
+            <Filter className="filter-control-icon" />
             <select
-              className="form-select service-select-sm"
+              className="clean-filter-select"
               value={selectedService}
               onChange={(e) => setSelectedService(e.target.value)}
+              aria-label="Filter by service type"
             >
               <option value="All">All Services</option>
               {SEVA_SERVICES.map((s) => (
@@ -655,12 +669,13 @@ export const CustomerTable = ({
           </div>
 
           {/* Date Filter Dropdown */}
-          <div className="service-filter-wrapper">
-            <Calendar className="input-icon" />
+          <div className="clean-filter-control">
+            <Calendar className="filter-control-icon" />
             <select
-              className="form-select service-select-sm"
+              className="clean-filter-select"
               value={selectedDateOption}
               onChange={(e) => setSelectedDateOption(e.target.value)}
+              aria-label="Filter by date range"
             >
               <option value="All Time">All Time</option>
               <option value="Today">Today</option>
@@ -671,22 +686,62 @@ export const CustomerTable = ({
             </select>
           </div>
 
+          {/* Simple Staff Member Dropdown Filter (Excludes Admin) */}
+          {effectiveRole === 'admin' && (
+            <div className="clean-filter-control">
+              <Users className="filter-control-icon" />
+              <select
+                className="clean-filter-select"
+                value={selectedStaff}
+                onChange={(e) => setSelectedStaff(e.target.value)}
+                aria-label="Filter by staff member"
+              >
+                <option value="All">All Staff Users</option>
+                {staffOptions
+                  .filter((s) => s.role !== 'admin')
+                  .map((s) => (
+                    <option key={s.id || s.email} value={s.id || s.email}>
+                      {s.full_name || s.email}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
+
           {selectedDateOption === 'Custom Date Range' && (
-            <div className="custom-date-inputs-desktop">
-              <input
-                type="date"
-                className="form-select service-select-sm"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                title="From Date"
-              />
-              <input
-                type="date"
-                className="form-select service-select-sm"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                title="To Date"
-              />
+            <div className="custom-date-inputs">
+              <div className="date-input-pill" title="Start Date">
+                <span className="date-pill-label">From:</span>
+                <input
+                  type="date"
+                  className="date-picker-input"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                />
+              </div>
+              <span className="date-range-separator">to</span>
+              <div className="date-input-pill" title="End Date">
+                <span className="date-pill-label">To:</span>
+                <input
+                  type="date"
+                  className="date-picker-input"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                />
+              </div>
+              {(fromDate || toDate) && (
+                <button
+                  type="button"
+                  className="btn-clear-date"
+                  onClick={() => {
+                    setFromDate('');
+                    setToDate('');
+                  }}
+                  title="Clear custom date selection"
+                >
+                  <X className="icon-xs" />
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -705,13 +760,14 @@ export const CustomerTable = ({
               <th className="text-right">Paid</th>
               <th className="text-right">Remaining Balance</th>
               <th>Date & Time</th>
+              <th>Created By</th>
               <th className="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {paginatedRecords.length === 0 ? (
               <tr>
-                <td colSpan={9} className="empty-state">
+                <td colSpan={10} className="empty-state">
                   <div className="empty-state-content">
                     <Inbox className="empty-icon" />
                     <h4>No Customer Records Found</h4>
@@ -802,6 +858,14 @@ export const CustomerTable = ({
                       <span className="date-text">{formatDateTime(record.createdAt)}</span>
                     </td>
 
+                    {/* Created By Staff Member */}
+                    <td className="cell-created-by">
+                      <span className="badge badge-staff-user">
+                        <User className="icon-xs mr-1" />
+                        {getStaffName(record.createdBy || record.created_by)}
+                      </span>
+                    </td>
+
                     {/* Action buttons */}
                     <td className="cell-actions text-center">
                       <div className="action-buttons-group">
@@ -821,13 +885,15 @@ export const CustomerTable = ({
                           <Eye className="icon-sm" />
                         </button>
 
-                        <button
-                          className="action-btn delete-btn"
-                          title="Delete Record"
-                          onClick={() => onDelete(record)}
-                        >
-                          <Trash2 className="icon-sm" />
-                        </button>
+                        {effectiveRole !== 'staff' && onDelete && (
+                          <button
+                            className="action-btn delete-btn"
+                            title="Delete Record"
+                            onClick={() => onDelete(record)}
+                          >
+                            <Trash2 className="icon-sm" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -953,13 +1019,15 @@ export const CustomerTable = ({
                       <Eye className="icon-sm" />
                     </button>
 
-                    <button
-                      className="action-btn delete-btn"
-                      title="Delete Record"
-                      onClick={() => onDelete(record)}
-                    >
-                      <Trash2 className="icon-sm" />
-                    </button>
+                    {effectiveRole !== 'staff' && onDelete && (
+                      <button
+                        className="action-btn delete-btn"
+                        title="Delete Record"
+                        onClick={() => onDelete(record)}
+                      >
+                        <Trash2 className="icon-sm" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -983,9 +1051,9 @@ export const CustomerTable = ({
         onResetFilters={handleResetMobileFilters}
       />
 
-      {/* Single-Row Centered Pagination Footer */}
-      <div className="table-pagination-footer">
-        <div className="pagination-info-item pagination-info-text">
+      {/* Single-Row Refined Pagination Footer */}
+      <div className="clean-pagination-footer">
+        <div className="pagination-left-info">
           <span className="pagination-count-text">
             Showing <strong>{filteredRecords.length > 0 ? startIndex + 1 : 0}</strong> - <strong>{endIndex}</strong> of <strong>{filteredRecords.length}</strong> records
           </span>
@@ -1007,67 +1075,73 @@ export const CustomerTable = ({
           )}
         </div>
 
-        <div className="pagination-info-item pagination-rows-select">
-          <label htmlFor="rowsPerPageSelect" className="text-xs text-muted">Per page:</label>
-          <select
-            id="rowsPerPageSelect"
-            className="form-select rows-select-sm"
-            value={rowsPerPage}
-            onChange={(e) => setRowsPerPage(Number(e.target.value))}
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-        </div>
-
-        <div className="pagination-info-item pagination-controls">
-          <button
-            className="page-btn"
-            disabled={validCurrentPage <= 1}
-            onClick={() => setCurrentPage(1)}
-            title="First Page"
-          >
-            <ChevronsLeft className="icon-sm" />
-          </button>
-          
-          <button
-            className="page-btn"
-            disabled={validCurrentPage <= 1}
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-            title="Previous Page"
-          >
-            <ChevronLeft className="icon-sm" />
-          </button>
-
-          {getPageNumbers().map((pageNum) => (
-            <button
-              key={pageNum}
-              className={`page-num-btn ${validCurrentPage === pageNum ? 'active' : ''}`}
-              onClick={() => setCurrentPage(pageNum)}
+        <div className="pagination-right-controls">
+          <div className="rows-per-page-group">
+            <label htmlFor="rowsPerPageSelect" className="rows-label">Per page:</label>
+            <select
+              id="rowsPerPageSelect"
+              className="rows-select-clean"
+              value={rowsPerPage}
+              onChange={(e) => setRowsPerPage(Number(e.target.value))}
             >
-              {pageNum}
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="pagination-nav-buttons">
+            <button
+              className="page-nav-btn"
+              disabled={validCurrentPage <= 1}
+              onClick={() => setCurrentPage(1)}
+              title="First Page"
+              aria-label="First Page"
+            >
+              <ChevronsLeft className="icon-xs" />
             </button>
-          ))}
 
-          <button
-            className="page-btn"
-            disabled={validCurrentPage >= totalPages}
-            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-            title="Next Page"
-          >
-            <ChevronRight className="icon-sm" />
-          </button>
+            <button
+              className="page-nav-btn"
+              disabled={validCurrentPage <= 1}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              title="Previous Page"
+              aria-label="Previous Page"
+            >
+              <ChevronLeft className="icon-xs" />
+            </button>
 
-          <button
-            className="page-btn"
-            disabled={validCurrentPage >= totalPages}
-            onClick={() => setCurrentPage(totalPages)}
-            title="Last Page"
-          >
-            <ChevronsRight className="icon-sm" />
-          </button>
+            {getPageNumbers().map((pageNum) => (
+              <button
+                key={pageNum}
+                className={`page-num-btn ${validCurrentPage === pageNum ? 'active' : ''}`}
+                onClick={() => setCurrentPage(pageNum)}
+              >
+                {pageNum}
+              </button>
+            ))}
+
+            <button
+              className="page-nav-btn"
+              disabled={validCurrentPage >= totalPages}
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              title="Next Page"
+              aria-label="Next Page"
+            >
+              <ChevronRight className="icon-xs" />
+            </button>
+
+            <button
+              className="page-nav-btn"
+              disabled={validCurrentPage >= totalPages}
+              onClick={() => setCurrentPage(totalPages)}
+              title="Last Page"
+              aria-label="Last Page"
+            >
+              <ChevronsRight className="icon-xs" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
