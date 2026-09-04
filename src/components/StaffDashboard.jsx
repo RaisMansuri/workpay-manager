@@ -40,25 +40,32 @@ export const StaffDashboard = ({ profile, onLogout }) => {
   // Filter customer records created strictly by this logged-in staff member
   const staffRecords = records.filter((r) => {
     if (!profile) return false;
-    const creator = String(r.created_by || r.createdBy || '').trim();
-    
-    // 1. Exclude null / empty / unassigned records
-    if (!creator) return false;
-    
-    // 2. Exclude Admin created records
-    if (creator.toLowerCase() === 'admin' || creator.toLowerCase().includes('admin')) return false;
-
-    // 3. Show ONLY records created by this logged-in staff user (matching ID, email, or name)
     const staffId = profile.id ? String(profile.id).toLowerCase() : '';
     const staffEmail = profile.email ? String(profile.email).toLowerCase() : '';
     const staffName = profile.full_name ? String(profile.full_name).toLowerCase() : '';
 
-    const creatorLower = creator.toLowerCase();
+    const creatorProf = r.creatorProfile || r.profiles;
+    if (creatorProf) {
+      const role = String(creatorProf.role || '').toLowerCase();
+      if (role === 'admin') return false;
+      const cId = String(creatorProf.id || '').toLowerCase();
+      const cEmail = String(creatorProf.email || '').toLowerCase();
+      const cName = String(creatorProf.full_name || '').toLowerCase();
+      return (
+        (staffId && cId === staffId) ||
+        (staffEmail && cEmail === staffEmail) ||
+        (staffName && cName === staffName)
+      );
+    }
+
+    const creatorId = String(r.created_by || r.createdBy || '').trim().toLowerCase();
+    if (!creatorId) return false;
+    if (creatorId === 'admin' || creatorId.includes('admin')) return false;
 
     return (
-      (staffId && creatorLower === staffId) ||
-      (staffEmail && creatorLower === staffEmail) ||
-      (staffName && creatorLower === staffName)
+      (staffId && creatorId === staffId) ||
+      (staffEmail && creatorId === staffEmail) ||
+      (staffName && creatorId === staffName)
     );
   });
 
@@ -79,11 +86,11 @@ export const StaffDashboard = ({ profile, onLogout }) => {
   };
 
   const handleSaveRecord = async (record, isEdit) => {
-    const creatorName = profile?.full_name || profile?.email || 'Rahul';
+    const creatorId = profile?.id;
     const recordToSave = {
       ...record,
-      created_by: isEdit ? (record.created_by || creatorName) : creatorName,
-      createdBy: isEdit ? (record.createdBy || creatorName) : creatorName
+      created_by: isEdit ? (record.created_by || record.createdBy || creatorId) : creatorId,
+      createdBy: isEdit ? (record.createdBy || record.created_by || creatorId) : creatorId
     };
     const result = await customerStorage.saveRecordAsync(recordToSave);
     if (result.success) {

@@ -220,11 +220,11 @@ export function App() {
   };
 
   const handleSaveRecord = async (record, isEdit) => {
-    const creatorName = profile?.full_name || 'Admin';
+    const creatorId = profile?.id;
     const recordToSave = {
       ...record,
-      created_by: isEdit ? (record.created_by || creatorName) : creatorName,
-      createdBy: isEdit ? (record.createdBy || creatorName) : creatorName
+      created_by: isEdit ? (record.created_by || record.createdBy || creatorId) : creatorId,
+      createdBy: isEdit ? (record.createdBy || record.created_by || creatorId) : creatorId
     };
     const result = await customerStorage.saveRecordAsync(recordToSave);
     if (result.success) {

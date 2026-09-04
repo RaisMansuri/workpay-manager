@@ -32,13 +32,15 @@ CREATE TABLE IF NOT EXISTS public.customer_records (
   remaining_balance NUMERIC(10, 2) NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
+  created_by UUID CONSTRAINT customer_records_created_by_fkey REFERENCES public.profiles(id) ON DELETE SET NULL,
+  updated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL
 );
 
 -- Ensure created_by and updated_by exist if table was previously created
-ALTER TABLE public.customer_records ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
-ALTER TABLE public.customer_records ADD COLUMN IF NOT EXISTS updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE public.customer_records ADD COLUMN IF NOT EXISTS created_by UUID;
+ALTER TABLE public.customer_records ADD COLUMN IF NOT EXISTS updated_by UUID;
+ALTER TABLE public.customer_records DROP CONSTRAINT IF EXISTS customer_records_created_by_fkey;
+ALTER TABLE public.customer_records ADD CONSTRAINT customer_records_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
 
 -- 3. Create Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_customer_name ON public.customer_records(customer_name);

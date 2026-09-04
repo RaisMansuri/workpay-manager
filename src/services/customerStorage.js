@@ -15,22 +15,43 @@ const notifyDbChange = () => {
 /**
  * Format database snake_case row to frontend camelCase object
  */
-const mapRowToRecord = (row) => ({
-  id: row.id,
-  customerName: row.customer_name,
-  mobileNumber: row.mobile_number,
-  address: row.address || '',
-  serviceType: row.service_type,
-  workDescription: row.work_description || '',
-  status: row.status,
-  totalAmount: Number(row.total_amount) || 0,
-  paidAmount: Number(row.paid_amount) || 0,
-  remainingBalance: Number(row.remaining_balance) || 0,
-  createdAt: row.created_at,
-  updatedAt: row.updated_at,
-  createdBy: row.created_by || null,
-  updatedBy: row.updated_by || null
-});
+const mapRowToRecord = (row, profilesMap = null) => {
+  let creator = null;
+  if (row.creator && typeof row.creator === 'object') {
+    creator = row.creator;
+  } else if (row.profiles && typeof row.profiles === 'object') {
+    creator = row.profiles;
+  } else if (row.created_by && profilesMap) {
+    creator = profilesMap.get(row.created_by) || null;
+  }
+
+  // Debug logging per Step 8
+  console.log({
+    recordId: row.id,
+    createdBy: row.created_by,
+    creator: creator
+  });
+
+  return {
+    id: row.id,
+    customerName: row.customer_name,
+    mobileNumber: row.mobile_number,
+    address: row.address || '',
+    serviceType: row.service_type,
+    workDescription: row.work_description || '',
+    status: row.status,
+    totalAmount: Number(row.total_amount) || 0,
+    paidAmount: Number(row.paid_amount) || 0,
+    remainingBalance: Number(row.remaining_balance) || 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    createdBy: row.created_by || null,
+    updatedBy: row.updated_by || null,
+    creator: creator || null,
+    creatorProfile: creator || null,
+    profiles: creator || null
+  };
+};
 
 /**
  * Format frontend camelCase object to database snake_case row
@@ -49,8 +70,8 @@ const mapRecordToRow = (record) => {
     remaining_balance: Number(record.remainingBalance) || 0,
     updated_at: new Date().toISOString()
   };
-  if (record.createdBy) row.created_by = record.createdBy;
-  if (record.updatedBy) row.updated_by = record.updatedBy;
+  if (record.createdBy || record.created_by) row.created_by = record.createdBy || record.created_by;
+  if (record.updatedBy || record.updated_by) row.updated_by = record.updatedBy || record.updated_by;
   return row;
 };
 
@@ -71,22 +92,76 @@ export const customerStorage = {
     }
 
     try {
-      const { data, error } = await supabase
+      let data = null;
+      let fetchError = null;
+
+      // STEP 5: Query with exact alias creator and FK constraint
+      const relationalRes = await supabase
         .from('customer_records')
-        .select('*')
+        .select(`
+          *,
+          creator:profiles!customer_records_created_by_fkey (
+            id,
+            full_name,
+            email,
+            role
+          )
+        `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        if (error.code === 'PGRST205') {
+      if (relationalRes.error) {
+        console.warn('Relational fetch notice:', relationalRes.error.message);
+        // Fallback query
+        const fallbackRes = await supabase
+          .from('customer_records')
+          .select('*, profiles!customer_records_created_by_fkey(id, full_name, email, role)')
+          .order('created_at', { ascending: false });
+
+        if (fallbackRes.error) {
+          const simpleRes = await supabase
+            .from('customer_records')
+            .select('*')
+            .order('created_at', { ascending: false });
+          data = simpleRes.data;
+          fetchError = simpleRes.error;
+        } else {
+          data = fallbackRes.data;
+        }
+      } else {
+        data = relationalRes.data;
+      }
+
+      if (fetchError) {
+        if (fetchError.code === 'PGRST205') {
           console.error('Table customer_records does not exist in Supabase yet. Please run supabase_schema.sql in Supabase SQL Editor.');
         } else {
-          console.error('Supabase PostgreSQL fetch error:', error);
+          console.error('Supabase PostgreSQL fetch error:', fetchError);
         }
         return [];
       }
 
+      // STEP 7 & 8: Fetch profiles for fallback in-memory matching and debugging
+      const profilesMap = new Map();
+      let allProfiles = [];
+      try {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, role, email, status');
+        if (profilesData && Array.isArray(profilesData)) {
+          allProfiles = profilesData;
+          profilesData.forEach(p => {
+            if (p?.id) profilesMap.set(p.id, p);
+          });
+        }
+      } catch (e) {
+        /* ignore profile lookup error */
+      }
+
+      // STEP 8: Log loaded profiles
+      console.log('ALL PROFILES:', allProfiles);
+
       if (data && Array.isArray(data)) {
-        return data.map(mapRowToRecord);
+        return data.map(row => mapRowToRecord(row, profilesMap));
       }
 
       return [];
@@ -109,14 +184,26 @@ export const customerStorage = {
     const paid = Number(record.paidAmount) || 0;
     const remainingBalance = Math.max(0, total - paid);
 
-    // Retrieve active logged-in user session UUID
-    let currentUserId = null;
+    // STEP 2: Retrieve active logged-in user session & profile UUID via supabase.auth.getUser()
+    let authUser = null;
+    let authUserId = null;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      currentUserId = session?.user?.id || null;
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (user?.id) {
+        authUser = user;
+        authUserId = user.id;
+      } else {
+        const { data: { session } } = await supabase.auth.getSession();
+        authUser = session?.user || null;
+        authUserId = session?.user?.id || null;
+      }
     } catch (e) {
-      /* ignore auth session lookup error */
+      /* ignore auth lookup error */
     }
+
+    // STEP 2: Console logs
+    console.log('AUTH USER:', authUser);
+    console.log('AUTH USER ID:', authUserId);
 
     const formattedRecord = {
       ...record,
@@ -130,11 +217,22 @@ export const customerStorage = {
       const row = mapRecordToRow(formattedRecord);
       if (!record.createdAt) {
         row.created_at = nowISO;
-        if (currentUserId) row.created_by = currentUserId;
       }
-      if (currentUserId) {
-        row.updated_by = currentUserId;
+
+      // STEP 2: Save exact auth user UUID into created_by
+      const isUUID = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
+      if (!row.created_by || !isUUID(row.created_by) || row.created_by === 'Admin' || row.created_by === 'Staff') {
+        if (authUserId) {
+          row.created_by = authUserId;
+        }
       }
+
+      if (authUserId) {
+        row.updated_by = authUserId;
+      }
+
+      console.log('CREATED BY SAVED:', row.created_by);
 
       const { data, error } = await supabase
         .from('customer_records')
@@ -144,16 +242,16 @@ export const customerStorage = {
       if (error) {
         console.error('Supabase PostgreSQL save error:', error);
         if (error.code === 'PGRST205' || error.message?.includes('customer_records')) {
-          return { 
-            success: false, 
-            error: "Database table 'customer_records' not created in Supabase yet. Please run supabase_schema.sql in Supabase SQL Editor." 
+          return {
+            success: false,
+            error: "Database table 'customer_records' not created in Supabase yet. Please run supabase_schema.sql in Supabase SQL Editor."
           };
         }
         throw error;
       }
 
       notifyDbChange();
-      
+
       // Fire email notification asynchronously (does not block UI)
       emailService.sendNewEntryNotification(formattedRecord).catch(err => {
         console.warn('Email dispatch notice:', err);
@@ -201,7 +299,7 @@ export const customerStorage = {
    * Subscribe to Supabase Realtime changes across all connected clients/tabs
    */
   subscribeToRealtime: (onDataChange) => {
-    if (!supabase) return () => {};
+    if (!supabase) return () => { };
 
     try {
       const channelName = `customer-records-sync-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -226,7 +324,7 @@ export const customerStorage = {
       };
     } catch (err) {
       console.warn('Realtime subscription notice:', err);
-      return () => {};
+      return () => { };
     }
   },
 
