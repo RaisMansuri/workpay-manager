@@ -5,7 +5,7 @@ import {
   Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus, Info, X, Calendar, SlidersHorizontal, Users, User, ChevronDown, Check
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
-import { WORK_STATUS, SEVA_SERVICES } from '../constants/serviceTypes';
+import { WORK_STATUS, SEVA_SERVICES, CUSTOMER_REQUIREMENTS } from '../constants/serviceTypes';
 import { staffService } from '../services/staffService';
 
 // Reusable Service Info Tooltip Component
@@ -85,6 +85,7 @@ const FilterPopover = ({
   records,
   selectedStatus,
   selectedService,
+  selectedRequirement,
   selectedDateOption,
   fromDate,
   toDate,
@@ -93,6 +94,7 @@ const FilterPopover = ({
 }) => {
   const [draftStatus, setDraftStatus] = useState(selectedStatus);
   const [draftService, setDraftService] = useState(selectedService);
+  const [draftRequirement, setDraftRequirement] = useState(selectedRequirement || 'All');
   const [draftDateOption, setDraftDateOption] = useState(selectedDateOption);
   const [draftFromDate, setDraftFromDate] = useState(fromDate);
   const [draftToDate, setDraftToDate] = useState(toDate);
@@ -103,11 +105,12 @@ const FilterPopover = ({
     if (isOpen) {
       setDraftStatus(selectedStatus);
       setDraftService(selectedService);
+      setDraftRequirement(selectedRequirement || 'All');
       setDraftDateOption(selectedDateOption);
       setDraftFromDate(fromDate);
       setDraftToDate(toDate);
     }
-  }, [isOpen, selectedStatus, selectedService, selectedDateOption, fromDate, toDate]);
+  }, [isOpen, selectedStatus, selectedService, selectedRequirement, selectedDateOption, fromDate, toDate]);
 
   // Calculate positioning coordinates relative to anchor button
   useEffect(() => {
@@ -173,6 +176,7 @@ const FilterPopover = ({
     onApplyFilters({
       status: draftStatus,
       service: draftService,
+      requirement: draftRequirement,
       dateOption: draftDateOption,
       fromDate: draftFromDate,
       toDate: draftToDate
@@ -313,6 +317,7 @@ export const CustomerTable = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedService, setSelectedService] = useState('All');
+  const [selectedRequirement, setSelectedRequirement] = useState('All');
   const [selectedDateOption, setSelectedDateOption] = useState('All Time');
   const [selectedStaff, setSelectedStaff] = useState('All');
   const [staffOptions, setStaffOptions] = useState([]);
@@ -515,7 +520,7 @@ export const CustomerTable = ({
   // Reset to Page 1 when filters or search change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedStatus, selectedService, selectedDateOption, selectedStaff, fromDate, toDate, rowsPerPage]);
+  }, [searchTerm, selectedStatus, selectedService, selectedRequirement, selectedDateOption, selectedStaff, fromDate, toDate, rowsPerPage]);
 
   // Helper for generating Customer Initials Avatar
   const getInitials = (name) => {
@@ -603,7 +608,7 @@ export const CustomerTable = ({
     return true;
   };
 
-  // Filter records based on Search, Status, Service Type, and Date Filter
+  // Filter records based on Search, Status, Service Type, Requirement, and Date Filter
   const filteredRecords = (records || []).filter((record) => {
     if (!record) return false;
     const query = searchTerm.trim().toLowerCase();
@@ -619,6 +624,10 @@ export const CustomerTable = ({
 
     const matchesService =
       selectedService === 'All' || record.serviceType === selectedService;
+
+    const matchesRequirement =
+      selectedRequirement === 'All' ||
+      record.requirement === selectedRequirement;
 
     const matchesDate = filterByDateOption(record.createdAt, selectedDateOption, fromDate, toDate);
 
@@ -651,18 +660,20 @@ export const CustomerTable = ({
       }
     }
 
-    return matchesSearch && matchesStatus && matchesService && matchesDate && matchesStaff;
+    return matchesSearch && matchesStatus && matchesService && matchesRequirement && matchesDate && matchesStaff;
   });
 
   const activeFilterCount =
     (selectedStatus !== 'All' ? 1 : 0) +
     (selectedService !== 'All' ? 1 : 0) +
+    (selectedRequirement !== 'All' ? 1 : 0) +
     (selectedDateOption !== 'All Time' ? 1 : 0) +
     (selectedStaff !== 'All' ? 1 : 0);
 
-  const handleApplyMobileFilters = ({ status, service, dateOption, fromDate: fD, toDate: tD }) => {
+  const handleApplyMobileFilters = ({ status, service, requirement, dateOption, fromDate: fD, toDate: tD }) => {
     setSelectedStatus(status);
     setSelectedService(service);
+    if (requirement) setSelectedRequirement(requirement);
     setSelectedDateOption(dateOption);
     setFromDate(fD);
     setToDate(tD);
@@ -672,6 +683,7 @@ export const CustomerTable = ({
   const handleResetMobileFilters = () => {
     setSelectedStatus('All');
     setSelectedService('All');
+    setSelectedRequirement('All');
     setSelectedDateOption('All Time');
     setSelectedStaff('All');
     setFromDate('');
@@ -800,6 +812,24 @@ export const CustomerTable = ({
             </select>
           </div>
 
+          {/* Requirement Dropdown Filter */}
+          <div className="clean-filter-control">
+            <SlidersHorizontal className="filter-control-icon" />
+            <select
+              className="clean-filter-select"
+              value={selectedRequirement}
+              onChange={(e) => setSelectedRequirement(e.target.value)}
+              aria-label="Filter by requirement"
+            >
+              <option value="All">All Requirements ({records.length})</option>
+              {CUSTOMER_REQUIREMENTS.map((r) => (
+                <option key={r} value={r}>
+                  {r} ({records.filter((rec) => rec.requirement === r).length})
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Service Dropdown Filter */}
           <div className="clean-filter-control">
             <Filter className="filter-control-icon" />
@@ -902,6 +932,7 @@ export const CustomerTable = ({
             <tr>
               <th>Customer Name & Address</th>
               <th>Mobile</th>
+              <th className="text-left">Requirement</th>
               <th>Service Type</th>
               <th>Work Status</th>
               <th className="text-right">Total</th>
@@ -915,7 +946,7 @@ export const CustomerTable = ({
           <tbody>
             {paginatedRecords.length === 0 ? (
               <tr>
-                <td colSpan={10} className="empty-state">
+                <td colSpan={11} className="empty-state">
                   <div className="empty-state-content">
                     <Inbox className="empty-icon" />
                     <h4>No Customer Records Found</h4>
@@ -962,6 +993,17 @@ export const CustomerTable = ({
                         <Phone className="icon-xs" />
                         {record.mobileNumber}
                       </a>
+                    </td>
+
+                    {/* Requirement Badge */}
+                    <td className="cell-requirement text-left">
+                      {record.requirement ? (
+                        <span className="badge badge-requirement">
+                          {record.requirement}
+                        </span>
+                      ) : (
+                        <span className="text-muted text-xs">—</span>
+                      )}
                     </td>
 
                     {/* Service Type with Info Tooltip */}
@@ -1098,16 +1140,19 @@ export const CustomerTable = ({
                   </div>
                 </div>
 
-                {/* 2. Mobile Phone Pill Button */}
-                <div className="ledger-phone-row">
+                {/* 2. Contact Phone, Requirement Badge & Service Tag Row */}
+                <div className="ledger-tags-row">
                   <a href={`tel:${record.mobileNumber}`} className="mobile-phone-pill" title="Tap to Call Customer">
                     <Phone className="icon-xs" />
                     <span>{record.mobileNumber}</span>
                   </a>
-                </div>
 
-                {/* 3. Service Tag with Info Tooltip */}
-                <div className="ledger-service-row">
+                  {record.requirement && (
+                    <span className="badge badge-requirement">
+                      {record.requirement}
+                    </span>
+                  )}
+
                   <ServiceInfoTooltip
                     tooltipId={`mb-svc-${record.id}`}
                     activeTooltipId={activeTooltipId}

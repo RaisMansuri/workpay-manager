@@ -106,7 +106,7 @@ export const StaffDetailModal = ({ staff, onClose, onToggleStatus }) => {
               </div>
               <div>
                 <span className="info-card-label">Email Address</span>
-                <p className="info-card-val truncate" title={staff.email}>{staff.email}</p>
+                <p className="info-card-val break-all" title={staff.email}>{staff.email}</p>
               </div>
             </div>
 

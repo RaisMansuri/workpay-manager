@@ -20,3 +20,10 @@ export const WORK_STATUS = {
   IN_PROGRESS: "In Progress",
   COMPLETED: "Completed"
 };
+
+export const CUSTOMER_REQUIREMENTS = [
+  'Enquiry',
+  'New Application',
+  'Update / Correction',
+  'Renewal'
+];

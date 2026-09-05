@@ -170,9 +170,6 @@ export const StaffManagement = ({ profile }) => {
       {/* 1. Page Header */}
       <div className="staff-header-banner">
         <div className="staff-header-text">
-          <span className="staff-eyebrow-label">
-            <Shield className="icon-xs mr-1" /> ADMIN PORTAL
-          </span>
           <h2 className="staff-header-title">Staff Management</h2>
           <p className="staff-header-subtitle">
             Manage staff credentials, role-based security, and access status

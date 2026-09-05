@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS public.customer_records (
   mobile_number VARCHAR(15) NOT NULL,
   address TEXT,
   service_type VARCHAR(255) NOT NULL,
+  requirement VARCHAR(100),
   work_description TEXT,
   status VARCHAR(50) NOT NULL DEFAULT 'Pending',
   total_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
@@ -36,9 +37,10 @@ CREATE TABLE IF NOT EXISTS public.customer_records (
   updated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL
 );
 
--- Ensure created_by and updated_by exist if table was previously created
+-- Ensure created_by, updated_by, and requirement exist if table was previously created
 ALTER TABLE public.customer_records ADD COLUMN IF NOT EXISTS created_by UUID;
 ALTER TABLE public.customer_records ADD COLUMN IF NOT EXISTS updated_by UUID;
+ALTER TABLE public.customer_records ADD COLUMN IF NOT EXISTS requirement VARCHAR(100);
 ALTER TABLE public.customer_records DROP CONSTRAINT IF EXISTS customer_records_created_by_fkey;
 ALTER TABLE public.customer_records ADD CONSTRAINT customer_records_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
 

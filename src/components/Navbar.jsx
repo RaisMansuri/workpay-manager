@@ -63,167 +63,108 @@ export const Navbar = ({ profile, onLogout, onExportCSV, activeTab = 'dashboard'
   };
 
   return (
-    <header className="navbar-header">
-      <div className="navbar-inner">
-        {/* Left: Brand Logo & Application Identity */}
-        <div className="brand-group">
-          <div className="brand-logo-glow" title="Seva Kendra Management System">
-            <Building2 className="brand-icon" />
-          </div>
-          <div className="brand-text-container">
-            <div className="brand-title-row">
-              <h1 className="brand-title">Seva Kendra</h1>
-              <span className="brand-title-badge">PORTAL</span>
+    <>
+      <header className="navbar-header">
+        <div className="navbar-inner">
+          {/* Left: Brand Logo & Application Identity */}
+          <div className="brand-group">
+            <div className="brand-logo-glow" title="Seva Kendra Management System">
+              <Building2 className="brand-icon" />
             </div>
-            <p className="brand-subtitle">Customer & Service Workflow</p>
-          </div>
-        </div>
-
-        {/* Center: Navigation Pill Switcher (Visually Centered on Desktop) */}
-        {isAdmin && onTabChange && (
-          <nav className="navbar-nav-center desktop-only-nav">
-            <div className="nav-switcher-container">
-              <button
-                type="button"
-                className={`nav-switcher-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-                onClick={() => onTabChange('dashboard')}
-              >
-                <LayoutDashboard className="icon-xs" />
-                <span>Dashboard</span>
-              </button>
-
-              <button
-                type="button"
-                className={`nav-switcher-btn ${activeTab === 'staff' ? 'active' : ''}`}
-                onClick={() => onTabChange('staff')}
-              >
-                <Users className="icon-xs" />
-                <span>Staff Management</span>
-              </button>
-            </div>
-          </nav>
-        )}
-
-        {/* Right Actions & Profile (Desktop) */}
-        <div className="navbar-actions desktop-only-actions">
-
-
-
-          {/* User Profile Capsule with Pipe & Direct Logout Button */}
-          <div className="user-profile-capsule-direct">
-            <div className="avatar-wrapper">
-              <div className="user-avatar">{initials}</div>
-              <span className="online-indicator" title="Online Live Session" />
-            </div>
-            <span className="user-name-text">{displayName}</span>
-
-            <span className="capsule-pipe-separator">|</span>
-
-            {onLogout && (
-              <button
-                type="button"
-                className="btn-capsule-logout"
-                onClick={handleLogoutClick}
-                disabled={isLoggingOut}
-                title="Logout portal session"
-              >
-                {isLoggingOut ? (
-                  <Loader2 className="icon-xs spin-slow" />
-                ) : (
-                  <LogOut className="icon-xs" />
-                )}
-                <span className="logout-text">{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile Hamburger Menu Button (< 768px) */}
-        <button
-          type="button"
-          className="mobile-hamburger-btn"
-          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-          aria-label="Toggle Navigation Menu"
-        >
-          {isMobileMenuOpen ? <X className="icon-md" /> : <Menu className="icon-md" />}
-        </button>
-      </div>
-
-      {/* Mobile Collapsible Navigation Menu Drawer */}
-      {isMobileMenuOpen && (
-        <div className="mobile-nav-dropdown animate-fade-in">
-          {/* User Profile Card */}
-          <div className="mobile-user-card mb-3">
-            <div className="avatar-wrapper">
-              <div className="user-avatar">{initials}</div>
-              <span className="online-indicator" />
-            </div>
-            <div>
-              <div className="user-name">{displayName}</div>
-              <div className="user-role-badge">{displayRole}</div>
+            <div className="brand-text-container">
+              <div className="brand-title-row">
+                <h1 className="brand-title">Seva Kendra</h1>
+                <span className="brand-title-badge">PORTAL</span>
+              </div>
+              <p className="brand-subtitle">Customer & Service Workflow</p>
             </div>
           </div>
 
-          {/* Admin Navigation Pills */}
+          {/* Center: Navigation Pill Switcher (Visually Centered on Desktop) */}
           {isAdmin && onTabChange && (
-            <div className="mobile-nav-pills mb-3">
-              <button
-                type="button"
-                className={`mobile-nav-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-                onClick={() => {
-                  onTabChange('dashboard');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <LayoutDashboard className="icon-xs mr-2" />
-                <span>Dashboard</span>
-              </button>
-              <button
-                type="button"
-                className={`mobile-nav-btn ${activeTab === 'staff' ? 'active' : ''}`}
-                onClick={() => {
-                  onTabChange('staff');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <Users className="icon-xs mr-2" />
-                <span>Staff Management</span>
-              </button>
-            </div>
+            <nav className="navbar-nav-center desktop-only-nav">
+              <div className="nav-switcher-container">
+                <button
+                  type="button"
+                  className={`nav-switcher-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+                  onClick={() => onTabChange('dashboard')}
+                >
+                  <LayoutDashboard className="icon-xs" />
+                  <span>Dashboard</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`nav-switcher-btn ${activeTab === 'staff' ? 'active' : ''}`}
+                  onClick={() => onTabChange('staff')}
+                >
+                  <Users className="icon-xs" />
+                  <span>Staff Management</span>
+                </button>
+              </div>
+            </nav>
           )}
 
-          {/* Actions Bar */}
-          <div className="mobile-actions-row">
-            {activeTab === 'dashboard' && (
-              <button
-                type="button"
-                className="btn-nav btn-export flex-1"
-                onClick={() => {
-                  handleExportClick();
-                  setIsMobileMenuOpen(false);
-                }}
-                disabled={isExporting}
-              >
-                <Download className="icon-xs" />
-                <span>Export CSV</span>
-              </button>
-            )}
+          {/* Right Actions & Profile */}
+          <div className="navbar-actions">
+            {/* User Profile Capsule with Pipe & Direct Logout Button */}
+            <div className="user-profile-capsule-direct">
+              <div className="avatar-wrapper">
+                <div className="user-avatar">{initials}</div>
+                <span className="online-indicator" title="Online Live Session" />
+              </div>
+              <span className="user-name-text">{displayName}</span>
 
-            {onLogout && (
-              <button
-                type="button"
-                className="btn-nav btn-logout flex-1"
-                onClick={handleLogoutClick}
-                disabled={isLoggingOut}
-              >
-                <LogOut className="icon-xs" />
-                <span>Logout</span>
-              </button>
-            )}
+              <span className="capsule-pipe-separator">|</span>
+
+              {onLogout && (
+                <button
+                  type="button"
+                  className="btn-capsule-logout"
+                  onClick={handleLogoutClick}
+                  disabled={isLoggingOut}
+                  title="Logout portal session"
+                >
+                  {isLoggingOut ? (
+                    <Loader2 className="icon-xs spin-slow" />
+                  ) : (
+                    <LogOut className="icon-xs" />
+                  )}
+                  <span className="logout-text">{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
+      </header>
+
+      {/* Mobile Fixed Bottom Navigation Bar (<= 768px, EXACTLY TWO ITEMS: Dashboard & Staff Management) */}
+      {isAdmin && onTabChange && (
+        <nav className="mobile-bottom-nav-bar" aria-label="Mobile Bottom Navigation">
+          <button
+            type="button"
+            className={`mobile-bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => onTabChange('dashboard')}
+            aria-label="Navigate to Dashboard"
+          >
+            {activeTab === 'dashboard' && <div className="mobile-bottom-nav-indicator" />}
+            <LayoutDashboard className="mobile-bottom-nav-icon" />
+            <span className="mobile-bottom-nav-label">Dashboard</span>
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-bottom-nav-item ${activeTab === 'staff' ? 'active' : ''}`}
+            onClick={() => onTabChange('staff')}
+            aria-label="Navigate to Staff Management"
+          >
+            {activeTab === 'staff' && <div className="mobile-bottom-nav-indicator" />}
+            <Users className="mobile-bottom-nav-icon" />
+            <span className="mobile-bottom-nav-label">Staff Management</span>
+          </button>
+        </nav>
       )}
-    </header>
+    </>
   );
 };
 

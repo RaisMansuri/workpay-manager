@@ -97,6 +97,10 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
                 <span className="detail-value highlight-service">{record.serviceType}</span>
               </div>
               <div className="ticket-detail-item">
+                <span className="detail-label">Requirement:</span>
+                <span className="detail-value font-bold text-primary">{record.requirement || '—'}</span>
+              </div>
+              <div className="ticket-detail-item">
                 <span className="detail-label">Description:</span>
                 <span className="detail-value">{record.workDescription || 'No additional notes'}</span>
               </div>

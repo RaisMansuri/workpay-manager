@@ -1513,6 +1513,24 @@ body {
   border: 1px solid var(--completed-border);
 }
 
+.badge-requirement {
+  background-color: #f3e8ff;
+  color: #7e22ce;
+  border: 1px solid #d8b4fe;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.cell-requirement {
+  text-align: left !important;
+  vertical-align: middle !important;
+}
+
 .spin-slow {
   animation: spin 3s linear infinite;
 }
@@ -2485,11 +2503,11 @@ body {
     background: #ffffff !important;
     border-radius: var(--radius-lg) !important;
     border: 1px solid var(--neutral-200) !important;
-    padding: 0.85rem !important;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+    padding: 0.9rem !important;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05) !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 0.65rem !important;
+    gap: 0.6rem !important;
     position: relative !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -2498,18 +2516,22 @@ body {
     overflow: visible !important;
   }
 
-  /* Mobile Phone Pill Button */
-  .ledger-phone-row {
+  /* Contact Phone, Requirement & Service Tag Row */
+  .ledger-tags-row {
     display: flex !important;
     align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
   }
 
   .mobile-phone-pill {
     display: inline-flex !important;
     align-items: center !important;
     gap: 0.35rem !important;
-    padding: 0.25rem 0.65rem !important;
-    font-size: 0.78rem !important;
+    padding: 3px 8px !important;
+    font-size: 0.75rem !important;
     font-weight: 600 !important;
     color: #1d4ed8 !important;
     background-color: #eff6ff !important;
@@ -2531,7 +2553,7 @@ body {
 
   .ledger-card-header {
     display: flex !important;
-    align-items: flex-start !important;
+    align-items: center !important;
     justify-content: space-between !important;
     gap: 0.5rem !important;
     width: 100% !important;
@@ -2586,17 +2608,22 @@ body {
 
   .ledger-service-row {
     display: flex !important;
-    flex-direction: column !important;
-    gap: 0.25rem !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 0.45rem !important;
     width: 100% !important;
     min-width: 0 !important;
   }
 
   .service-tag {
-    font-size: 0.72rem !important;
-    padding: 2px 7px !important;
-    align-self: flex-start !important;
-    max-width: 100% !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: #1e40af !important;
+    background-color: #eff6ff !important;
+    border: 1px solid #dbeafe !important;
+    padding: 3px 8px !important;
+    border-radius: var(--radius-sm) !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -4638,14 +4665,126 @@ body {
 }
 
 /* ==========================================================================
+   RESPONSIVE MODAL POPUP FIXES FOR MOBILE SCREENS (<= 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.5rem !important;
+    align-items: center !important;
+  }
+
+  .modal-container,
+  .staff-form-modal,
+  .staff-detail-modal-light {
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    border-radius: 16px !important;
+    margin: 0 auto !important;
+  }
+
+  .modal-header {
+    padding: 1rem 1.15rem !important;
+  }
+
+  .modal-title-group {
+    gap: 0.65rem !important;
+  }
+
+  .staff-modal-avatar-lg {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 1.1rem !important;
+    border-radius: 12px !important;
+  }
+
+  .staff-modal-name-row {
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+  }
+
+  .modal-title {
+    font-size: 1.05rem !important;
+  }
+
+  .modal-subtitle {
+    font-size: 0.75rem !important;
+  }
+
+  .modal-body {
+    padding: 1rem !important;
+    max-height: calc(92vh - 130px) !important;
+  }
+
+  .detail-banner-light {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    padding: 0.85rem 1rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .staff-info-cards-grid-light {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .info-card-light {
+    padding: 0.75rem 0.9rem !important;
+    gap: 0.75rem !important;
+    min-width: 0 !important;
+  }
+
+  .info-card-val {
+    font-size: 0.85rem !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .detail-box-light {
+    padding: 0.85rem 1rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .timestamps-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
+
+  .timestamp-val {
+    font-size: 0.82rem !important;
+    word-break: break-word !important;
+  }
+
+  .permission-check-item {
+    font-size: 0.8rem !important;
+  }
+
+  .modal-footer {
+    padding: 0.85rem 1rem !important;
+    gap: 0.65rem !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+  }
+
+  .modal-footer .btn {
+    flex: 1 1 auto !important;
+    min-width: 120px !important;
+    justify-content: center !important;
+    padding: 0.65rem 0.85rem !important;
+    font-size: 0.82rem !important;
+  }
+}
+
+/* ==========================================================================
    PRODUCTION-READY SAAS DASHBOARD STYLING FOR STAFF MANAGEMENT
    ========================================================================== */
 
 /* 1. Header Banner & Eyebrow */
 .staff-management-container {
-  max-width: 1720px;
-  margin: 0 auto;
-  padding: 1.5rem 1.75rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .staff-header-banner {
@@ -6797,6 +6936,104 @@ button.btn-save-staff:hover {
 
 .toast-notification.toast-info .toast-icon {
   color: #2563eb !important;
+}
+
+/* ============================================================================
+   MOBILE FIXED BOTTOM NAVIGATION BAR (< 768px)
+   ============================================================================ */
+
+/* Hide Bottom Nav on Desktop by default */
+.mobile-bottom-nav-bar {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  /* Prevent content overlap with fixed bottom navigation bar */
+  .main-container,
+  .app-layout {
+    padding-bottom: 85px !important;
+  }
+
+  .desktop-only-nav {
+    display: none !important;
+  }
+
+  .mobile-bottom-nav-bar {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 62px !important;
+    background: #ffffff !important;
+    border-top: 1.5px solid #e2e8f0 !important;
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08) !important;
+    z-index: 9999 !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .mobile-bottom-nav-item {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100% !important;
+    position: relative !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    cursor: pointer !important;
+    color: #64748b !important;
+    padding: 4px 0 6px 0 !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .mobile-bottom-nav-item.active {
+    color: #2563eb !important;
+  }
+
+  .mobile-bottom-nav-indicator {
+    position: absolute !important;
+    top: 0 !important;
+    left: 20% !important;
+    right: 20% !important;
+    height: 3.5px !important;
+    background-color: #2563eb !important;
+    border-radius: 0 0 4px 4px !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4) !important;
+  }
+
+  .mobile-bottom-nav-icon {
+    width: 22px !important;
+    height: 22px !important;
+    margin-bottom: 3px !important;
+    transition: transform 0.2s ease !important;
+  }
+
+  .mobile-bottom-nav-item.active .mobile-bottom-nav-icon {
+    transform: translateY(-1px) scale(1.08) !important;
+    color: #2563eb !important;
+  }
+
+  .mobile-bottom-nav-label {
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    line-height: 1 !important;
+    letter-spacing: -0.01em !important;
+    white-space: nowrap !important;
+  }
+
+  .mobile-bottom-nav-item.active .mobile-bottom-nav-label {
+    font-weight: 700 !important;
+    color: #2563eb !important;
+  }
 }
 
 
