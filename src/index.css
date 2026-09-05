@@ -5279,9 +5279,42 @@ button.btn-create-staff:hover {
     width: 100%;
   }
 
+  .controls-right-group,
+  .create-refresh-inline-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 0.65rem !important;
+    margin-top: 0.25rem !important;
+  }
+
   .btn-create-staff {
-    width: 100%;
-    justify-content: center;
+    flex: 1 !important;
+    width: auto !important;
+    height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+  }
+
+  .btn-toolbar-refresh {
+    flex-shrink: 0 !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    border-radius: 10px !important;
+  }
+
+  .unified-divider {
+    margin: 1.15rem 0 1.25rem 0 !important;
+    height: 1px !important;
+    background: #e2e8f0 !important;
   }
 
   .staff-kpi-grid {
@@ -5292,70 +5325,98 @@ button.btn-create-staff:hover {
     flex-direction: column;
   }
 
-  .toolbar-actions-group {
-    width: 100%;
+  .table-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04) !important;
+    overflow: hidden !important;
   }
 
-  .toolbar-filter-wrapper {
-    flex: 1;
+  .table-header-controls {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.85rem !important;
+    padding: 1.25rem 1.25rem 1rem 1.25rem !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    background: #ffffff !important;
   }
 
-  .toolbar-filter-select {
-    width: 100%;
+  .filter-row-1 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.85rem !important;
   }
 
-  /* Mobile Card View for Staff Directory */
+  .filter-row-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    margin-top: 0.25rem !important;
+  }
+
+  .clean-filter-control,
+  .clean-filter-select {
+    width: 100% !important;
+  }
+
+  /* Mobile Card View for Directory Records */
   .mobile-cards-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.25rem !important;
+    padding: 1.25rem !important;
+    background: #f8fafc !important;
   }
 
   .mobile-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 1.15rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    padding: 1.25rem 1.35rem !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04) !important;
+    margin-bottom: 0.25rem !important;
   }
 
   .mobile-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 0.85rem;
-    border-bottom: 1px solid #f1f5f9;
-    margin-bottom: 0.85rem;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-bottom: 0.85rem !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    margin-bottom: 0.85rem !important;
   }
 
   .mobile-card-user {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
   }
 
   .mobile-user-name {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #0f172a;
+    font-size: 0.98rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
   }
 
   .mobile-user-email {
-    font-size: 0.78rem;
-    color: #64748b;
+    font-size: 0.78rem !important;
+    color: #64748b !important;
   }
 
   .mobile-card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    margin-bottom: 1rem !important;
   }
 
   .mobile-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.82rem;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 0.85rem !important;
+    padding: 0.25rem 0 !important;
   }
 
   .mobile-label {
@@ -5369,8 +5430,84 @@ button.btn-create-staff:hover {
   }
 
   .mobile-card-footer {
+    padding-top: 0.85rem;
+    border-top: 1px solid #f1f5f9;
     display: flex;
-    gap: 0.75rem;
+    justify-content: flex-end;
+  }
+
+  .mobile-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    width: 100%;
+  }
+
+  .mobile-action-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-action-btn.btn-view {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #2563eb;
+  }
+
+  .mobile-action-btn.btn-view:hover {
+    background: #2563eb;
+    color: #ffffff;
+  }
+
+  .mobile-action-btn.btn-edit {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+  }
+
+  .mobile-action-btn.btn-edit:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  .mobile-action-btn.btn-key {
+    background: #fffbe6;
+    border: 1px solid #fef08a;
+    color: #d97706;
+  }
+
+  .mobile-action-btn.btn-key:hover {
+    background: #d97706;
+    color: #ffffff;
+  }
+
+  .mobile-action-btn.btn-deactivate {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
+  }
+
+  .mobile-action-btn.btn-deactivate:hover {
+    background: #dc2626;
+    color: #ffffff;
+  }
+
+  .mobile-action-btn.btn-activate {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
+  }
+
+  .mobile-action-btn.btn-activate:hover {
+    background: #16a34a;
+    color: #ffffff;
   }
 }
 

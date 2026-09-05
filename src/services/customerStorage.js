@@ -236,10 +236,25 @@ export const customerStorage = {
 
       console.log('CREATED BY SAVED:', row.created_by);
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('customer_records')
         .upsert(row, { onConflict: 'id' })
         .select('*');
+
+      // Auto-fallback retry if requirement column is not added to Supabase DB table yet
+      if (error && (error.code === 'PGRST204' || (error.message && error.message.includes('requirement')))) {
+        console.warn('Requirement column not found in Supabase schema cache. Retrying upsert without requirement field...');
+        const rowWithoutRequirement = { ...row };
+        delete rowWithoutRequirement.requirement;
+
+        const retryRes = await supabase
+          .from('customer_records')
+          .upsert(rowWithoutRequirement, { onConflict: 'id' })
+          .select('*');
+
+        data = retryRes.data;
+        error = retryRes.error;
+      }
 
       if (error) {
         console.error('Supabase PostgreSQL save error:', error);

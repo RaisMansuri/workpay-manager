@@ -210,12 +210,12 @@ export const StaffManagement = ({ profile }) => {
         </div>
       </div>
 
-      {/* 3. ONE SINGLE UNIFIED PARENT CARD (SEARCH, FILTERS, BUTTONS, GRID & PAGINATION) */}
-      <div className="unified-staff-card">
-        {/* SINGLE CONTROLS ROW Layout */}
-        <div className="unified-single-controls-row">
-          {/* LEFT GROUP: Search Input + Status Dropdown */}
-          <div className="controls-left-group">
+      {/* 3. MAIN UNIFIED CARD CONTAINER (EXACTLY MATCHING DASHBOARD CUSTOMERTABLE) */}
+      <div className="card table-card">
+        {/* Table Top Controls Bar */}
+        <div className="table-header-controls">
+          {/* ROW 1: Search Box + Action Buttons */}
+          <div className="filter-row-1">
             <div className="search-box">
               <Search className="search-icon" />
               <input
@@ -233,7 +233,30 @@ export const StaffManagement = ({ profile }) => {
               )}
             </div>
 
-            {/* Status Dropdown Filter */}
+            <div className="table-actions-group create-refresh-inline-row">
+              <button
+                type="button"
+                className="btn btn-primary btn-create-staff"
+                onClick={() => setIsCreateModalOpen(true)}
+              >
+                <UserPlus className="icon-sm mr-2" />
+                <span>Create New Staff</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn-toolbar-refresh"
+                onClick={loadStaffList}
+                title="Refresh staff records"
+                aria-label="Refresh staff records"
+              >
+                <RefreshCw className={`icon-sm ${isLoading ? 'spinner-icon' : ''}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* ROW 2: Status Filter Dropdown */}
+          <div className="filter-row-2">
             <div className="clean-filter-control">
               <Clock className="filter-control-icon" />
               <select
@@ -248,32 +271,7 @@ export const StaffManagement = ({ profile }) => {
               </select>
             </div>
           </div>
-
-          {/* RIGHT GROUP: Create New Staff Button + Refresh Button */}
-          <div className="controls-right-group">
-            <button
-              type="button"
-              className="btn btn-primary btn-create-staff"
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              <UserPlus className="icon-sm mr-2" />
-              <span>Create New Staff</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn-toolbar-refresh"
-              onClick={loadStaffList}
-              title="Refresh staff records"
-              aria-label="Refresh staff records"
-            >
-              <RefreshCw className={`icon-sm ${isLoading ? 'spinner-icon' : ''}`} />
-            </button>
-          </div>
         </div>
-
-        {/* Subtle Divider Line */}
-        <div className="unified-divider" />
 
         {/* Desktop Data Table View */}
         <div className="table-responsive desktop-table-wrapper">
@@ -441,31 +439,49 @@ export const StaffManagement = ({ profile }) => {
                   </div>
 
                   <div className="mobile-card-footer">
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm flex-1"
-                      onClick={() => setViewingStaff(staff)}
-                    >
-                      <Eye className="icon-xs mr-1" /> View Details
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm flex-1 text-amber"
-                      onClick={() => setResetPasswordStaff(staff)}
-                    >
-                      <KeyRound className="icon-xs mr-1" /> Reset Pass
-                    </button>
-
-                    {!isAdmin && (
+                    <div className="mobile-card-actions">
                       <button
                         type="button"
-                        className={`btn btn-sm flex-1 ${isActive ? 'btn-danger-outline' : 'btn-success-outline'}`}
-                        onClick={() => confirmToggleStatus(staff)}
+                        className="mobile-action-btn btn-view"
+                        onClick={() => setViewingStaff(staff)}
+                        title="View Staff Details"
+                        aria-label="View Staff Details"
                       >
-                        {isActive ? 'Deactivate' : 'Activate'}
+                        <Eye className="icon-sm" />
                       </button>
-                    )}
+
+                      <button
+                        type="button"
+                        className="mobile-action-btn btn-edit"
+                        onClick={() => setViewingStaff(staff)}
+                        title="Edit Staff Details"
+                        aria-label="Edit Staff Details"
+                      >
+                        <Edit3 className="icon-sm" />
+                      </button>
+
+                      <button
+                        type="button"
+                        className="mobile-action-btn btn-key"
+                        onClick={() => setResetPasswordStaff(staff)}
+                        title="Reset Staff Password"
+                        aria-label="Reset Staff Password"
+                      >
+                        <KeyRound className="icon-sm" />
+                      </button>
+
+                      {!isAdmin && (
+                        <button
+                          type="button"
+                          className={`mobile-action-btn ${isActive ? 'btn-deactivate' : 'btn-activate'}`}
+                          onClick={() => confirmToggleStatus(staff)}
+                          title={isActive ? 'Deactivate Account' : 'Activate Account'}
+                          aria-label={isActive ? 'Deactivate Account' : 'Activate Account'}
+                        >
+                          {isActive ? <XCircle className="icon-sm" /> : <CheckCircle2 className="icon-sm" />}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
