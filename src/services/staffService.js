@@ -6,18 +6,30 @@ export const staffService = {
    */
   async getStaffListAsync() {
     if (!isSupabaseConfigured() || !supabase) {
+      console.warn('Supabase is not configured.');
       const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
       return cached ? JSON.parse(cached) : [];
     }
 
     try {
-      const { data, error } = await supabase
+      // 1. Primary query with created_at ordering
+      let { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
+      // 2. Fallback query without ordering if created_at column causes error
       if (error) {
-        console.warn('Error fetching staff list from Supabase:', error.message);
+        console.warn('Primary fetch with created_at order failed, trying fallback select without order:', error.message);
+        const fallback = await supabase.from('profiles').select('*');
+        if (!fallback.error) {
+          data = fallback.data;
+          error = null;
+        }
+      }
+
+      if (error) {
+        console.error('Error fetching staff list from Supabase profiles table:', error);
         const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
         return cached ? JSON.parse(cached) : [];
       }
@@ -28,7 +40,7 @@ export const staffService = {
 
       return data || [];
     } catch (err) {
-      console.error('Failed to get staff list:', err);
+      console.error('Failed to get staff list (exception):', err);
       const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
       return cached ? JSON.parse(cached) : [];
     }
@@ -139,9 +151,9 @@ export const staffService = {
         }
 
         if (profileError.message?.includes('row-level security') || profileError.code === '42501') {
-          return { 
-            success: false, 
-            error: "Database RLS Error: Row-level security is enabled on 'profiles' table in Supabase. Please run SQL in Supabase Editor: ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;" 
+          return {
+            success: false,
+            error: "Database RLS Error: Row-level security is enabled on 'profiles' table in Supabase. Please run SQL in Supabase Editor: ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;"
           };
         }
         return { success: false, error: profileError.message };
@@ -240,7 +252,7 @@ export const staffService = {
    * Realtime subscription for profiles table
    */
   subscribeToRealtime(onDataChange) {
-    if (!isSupabaseConfigured() || !supabase) return () => {};
+    if (!isSupabaseConfigured() || !supabase) return () => { };
 
     try {
       const channelName = `profiles-sync-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -265,7 +277,7 @@ export const staffService = {
       };
     } catch (err) {
       console.warn('Profiles realtime notice:', err);
-      return () => {};
+      return () => { };
     }
   }
 };
