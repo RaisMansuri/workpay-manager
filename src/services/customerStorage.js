@@ -3,6 +3,7 @@ import { getInitialDemoData } from '../utils/initialDemoData';
 import { isToday } from '../utils/formatters';
 import { emailService } from './emailService';
 import { smsService } from './smsService';
+import { staffService } from './staffService';
 
 const DB_CHANGE_EVENT = 'seva_kendra_db_change';
 
@@ -25,12 +26,12 @@ const mapRowToRecord = (row, profilesMap = null) => {
     creator = profilesMap.get(row.created_by) || null;
   }
 
-  // Debug logging per Step 8
-  console.log({
-    recordId: row.id,
-    createdBy: row.created_by,
-    creator: creator
-  });
+  // // Debug logging per Step 8
+  // console.log({
+  //   recordId: row.id,
+  //   createdBy: row.created_by,
+  //   creator: creator
+  // });
 
   return {
     id: row.id,
@@ -142,13 +143,11 @@ export const customerStorage = {
         return [];
       }
 
-      // STEP 7 & 8: Fetch profiles for fallback in-memory matching and debugging
+      // STEP 7 & 8: Fetch profiles via staffService (deduplicated with CustomerTable filter)
       const profilesMap = new Map();
       let allProfiles = [];
       try {
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, full_name, role, email, status');
+        const profilesData = await staffService.getStaffListAsync();
         if (profilesData && Array.isArray(profilesData)) {
           allProfiles = profilesData;
           profilesData.forEach(p => {
@@ -160,7 +159,7 @@ export const customerStorage = {
       }
 
       // STEP 8: Log loaded profiles
-      console.log('ALL PROFILES:', allProfiles);
+      // console.log('ALL PROFILES:', allProfiles);
 
       if (data && Array.isArray(data)) {
         return data.map(row => mapRowToRecord(row, profilesMap));
@@ -221,17 +220,23 @@ export const customerStorage = {
         row.created_at = nowISO;
       }
 
-      // STEP 2: Save exact auth user UUID into created_by
+      // STEP 2: Save exact auth user UUID into created_by and updated_by
       const isUUID = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 
-      if (!row.created_by || !isUUID(row.created_by) || row.created_by === 'Admin' || row.created_by === 'Staff') {
-        if (authUserId) {
+      if (!isUUID(row.created_by)) {
+        if (isUUID(authUserId)) {
           row.created_by = authUserId;
+        } else {
+          row.created_by = null;
         }
       }
 
-      if (authUserId) {
-        row.updated_by = authUserId;
+      if (!isUUID(row.updated_by)) {
+        if (isUUID(authUserId)) {
+          row.updated_by = authUserId;
+        } else {
+          row.updated_by = null;
+        }
       }
 
       console.log('CREATED BY SAVED:', row.created_by);

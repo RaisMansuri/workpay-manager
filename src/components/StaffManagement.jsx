@@ -60,12 +60,32 @@ export const StaffManagement = ({ profile }) => {
   }, []);
 
   useEffect(() => {
-    loadStaffList();
+    let isMounted = true;
+
+    const fetchStaff = async () => {
+      setIsLoading(true);
+      try {
+        const data = await staffService.getStaffListAsync();
+        if (isMounted) setStaffList(data);
+      } catch (err) {
+        console.error('Failed to load staff list:', err);
+        if (isMounted) showToast('Failed to load staff records.', 'error');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchStaff();
+
     const unsubscribe = staffService.subscribeToRealtime((updated) => {
-      setStaffList(updated);
+      if (isMounted) setStaffList(updated);
     });
-    return () => unsubscribe();
-  }, [loadStaffList]);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
 
   // Reset pagination on filter or search change
   useEffect(() => {
@@ -214,23 +234,39 @@ export const StaffManagement = ({ profile }) => {
       <div className="card table-card">
         {/* Table Top Controls Bar */}
         <div className="table-header-controls">
-          {/* ROW 1: Search Box + Action Buttons */}
+          {/* Controls Row: Search Box + Status Filter (Left) | Action Buttons (Right) */}
           <div className="filter-row-1">
-            <div className="search-box">
-              <Search className="search-icon" />
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search staff by name, email, or mobile..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                aria-label="Search staff members"
-              />
-              {searchTerm && (
-                <button type="button" className="clear-search-btn" onClick={() => setSearchTerm('')}>
-                  ×
-                </button>
-              )}
+            <div className="filter-left-group">
+              <div className="search-box">
+                <Search className="search-icon" />
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search staff by name, email, or mobile..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Search staff members"
+                />
+                {searchTerm && (
+                  <button type="button" className="clear-search-btn" onClick={() => setSearchTerm('')}>
+                    ×
+                  </button>
+                )}
+              </div>
+
+              <div className="clean-filter-control">
+                <Clock className="filter-control-icon" />
+                <select
+                  className="clean-filter-select"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  aria-label="Filter by account status"
+                >
+                  <option value="all">All Statuses ({staffList.length})</option>
+                  <option value="active">Active Only ({activeCount})</option>
+                  <option value="inactive">Inactive Only ({inactiveCount})</option>
+                </select>
+              </div>
             </div>
 
             <div className="table-actions-group create-refresh-inline-row">
@@ -252,23 +288,6 @@ export const StaffManagement = ({ profile }) => {
               >
                 <RefreshCw className={`icon-sm ${isLoading ? 'spinner-icon' : ''}`} />
               </button>
-            </div>
-          </div>
-
-          {/* ROW 2: Status Filter Dropdown */}
-          <div className="filter-row-2">
-            <div className="clean-filter-control">
-              <Clock className="filter-control-icon" />
-              <select
-                className="clean-filter-select"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                aria-label="Filter by account status"
-              >
-                <option value="all">All Statuses ({staffList.length})</option>
-                <option value="active">Active Only ({activeCount})</option>
-                <option value="inactive">Inactive Only ({inactiveCount})</option>
-              </select>
             </div>
           </div>
         </div>

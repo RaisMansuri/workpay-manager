@@ -1,49 +1,61 @@
 import { supabase, secondarySupabase, isSupabaseConfigured } from '../config/supabaseClient';
 
+let inFlightStaffListPromise = null;
+
 export const staffService = {
   /**
    * Fetch all staff members dynamically from Supabase `profiles` table
    */
   async getStaffListAsync() {
-    if (!isSupabaseConfigured() || !supabase) {
-      console.warn('Supabase is not configured.');
-      const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
-      return cached ? JSON.parse(cached) : [];
+    if (inFlightStaffListPromise) {
+      return inFlightStaffListPromise;
     }
 
-    try {
-      // 1. Primary query with created_at ordering
-      let { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      // 2. Fallback query without ordering if created_at column causes error
-      if (error) {
-        console.warn('Primary fetch with created_at order failed, trying fallback select without order:', error.message);
-        const fallback = await supabase.from('profiles').select('*');
-        if (!fallback.error) {
-          data = fallback.data;
-          error = null;
+    inFlightStaffListPromise = (async () => {
+      try {
+        if (!isSupabaseConfigured() || !supabase) {
+          console.warn('Supabase is not configured.');
+          const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
+          return cached ? JSON.parse(cached) : [];
         }
-      }
 
-      if (error) {
-        console.error('Error fetching staff list from Supabase profiles table:', error);
+        // 1. Primary query with created_at ordering
+        let { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        // 2. Fallback query without ordering if created_at column causes error
+        if (error) {
+          console.warn('Primary fetch with created_at order failed, trying fallback select without order:', error.message);
+          const fallback = await supabase.from('profiles').select('*');
+          if (!fallback.error) {
+            data = fallback.data;
+            error = null;
+          }
+        }
+
+        if (error) {
+          console.error('Error fetching staff list from Supabase profiles table:', error);
+          const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
+          return cached ? JSON.parse(cached) : [];
+        }
+
+        if (data && data.length > 0 && typeof window !== 'undefined') {
+          localStorage.setItem('workpay_cached_staff_profiles', JSON.stringify(data));
+        }
+
+        return data || [];
+      } catch (err) {
+        console.error('Failed to get staff list (exception):', err);
         const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
         return cached ? JSON.parse(cached) : [];
+      } finally {
+        inFlightStaffListPromise = null;
       }
+    })();
 
-      if (data && data.length > 0 && typeof window !== 'undefined') {
-        localStorage.setItem('workpay_cached_staff_profiles', JSON.stringify(data));
-      }
-
-      return data || [];
-    } catch (err) {
-      console.error('Failed to get staff list (exception):', err);
-      const cached = typeof window !== 'undefined' ? localStorage.getItem('workpay_cached_staff_profiles') : null;
-      return cached ? JSON.parse(cached) : [];
-    }
+    return inFlightStaffListPromise;
   },
 
   /**

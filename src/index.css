@@ -490,29 +490,29 @@ body {
    RIGHT-SIDE SLIDING DRAWER FORM
    ========================================================================== */
 .drawer-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(6px);
-  z-index: 100;
-  display: flex;
-  justify-content: flex-end;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(6px) !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
 }
 
 .drawer-panel {
-  width: 100%;
-  max-width: 480px;
-  height: 100%;
-  background: #ffffff;
-  box-shadow: -10px 0 40px rgba(15, 23, 42, 0.22);
-  display: flex;
-  flex-direction: column;
-  z-index: 101;
-  animation: slideInRight 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
+  width: 100% !important;
+  max-width: 480px !important;
+  height: 100% !important;
+  background: #ffffff !important;
+  box-shadow: -10px 0 40px rgba(15, 23, 42, 0.22) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 100000 !important;
+  animation: slideInRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  position: relative !important;
 }
 
 @keyframes slideInRight {
@@ -802,14 +802,17 @@ body {
 
 /* Drawer Sticky Footer */
 .drawer-footer-sticky {
-  padding: 1.15rem 1.5rem;
-  border-top: 1px solid var(--neutral-200);
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
-  box-shadow: 0 -4px 15px rgba(15, 23, 42, 0.05);
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 1000 !important;
+  padding: 1.15rem 1.5rem !important;
+  border-top: 1px solid var(--neutral-200) !important;
+  background: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 -4px 15px rgba(15, 23, 42, 0.1) !important;
 }
 
 .btn-submit-main {
@@ -4674,6 +4677,7 @@ body {
   }
 
   .modal-container,
+  .ticket-detail-modal-light,
   .staff-form-modal,
   .staff-detail-modal-light {
     max-width: 100% !important;
@@ -5632,6 +5636,20 @@ button.btn-create-staff:hover {
   width: 100% !important;
 }
 
+.filter-left-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.85rem !important;
+  flex: 1 !important;
+  flex-wrap: wrap !important;
+}
+
+.filter-left-group .search-box {
+  flex: 0 1 300px !important;
+  max-width: 320px !important;
+  position: relative !important;
+}
+
 .filter-row-1 .search-box {
   flex: 1 !important;
   max-width: 480px !important;
@@ -5910,8 +5928,18 @@ button.btn-create-staff:hover {
     align-items: stretch !important;
   }
 
+  .filter-left-group {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+
+  .filter-left-group .search-box,
   .filter-row-1 .search-box {
     max-width: 100% !important;
+    width: 100% !important;
   }
 
   .btn-new-entry {

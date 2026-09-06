@@ -44,88 +44,90 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content ticket-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay animate-fade-in" onClick={onClose}>
+      <div className="modal-container ticket-detail-modal-light animate-scale-up" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="modal-header">
-          <div className="modal-header-brand">
-            <Building2 className="brand-modal-icon" />
+          <div className="modal-title-group">
+            <div className="modal-icon-badge">
+              <Building2 className="icon-md text-primary" />
+            </div>
             <div>
-              <h3>Seva Kendra Service Ticket</h3>
-              <p className="text-muted text-xs">Service Request Receipt</p>
+              <h3 className="modal-title">Seva Kendra Service Ticket</h3>
+              <p className="modal-subtitle">Service Request Receipt</p>
             </div>
           </div>
-          <button className="modal-close-btn" onClick={onClose}>
-            <X className="icon-md" />
+          <button className="btn-close" onClick={onClose} aria-label="Close modal">
+            <X className="icon-sm" />
           </button>
         </div>
 
         {/* Modal Ticket Body */}
         <div className="modal-body printable-area">
-          <div className="ticket-badge-row">
-            <h4 className="font-bold">{record.customerName}</h4>
+          <div className="ticket-badge-row flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <h4 className="font-bold text-lg text-slate-900">{record.customerName}</h4>
             {getModalStatusBadge(record.status)}
           </div>
 
-          <div className="ticket-grid">
-            <div className="ticket-section">
-              <h5 className="ticket-section-title">Customer Information</h5>
-              <div className="ticket-detail-item">
-                <span className="detail-label">Full Name:</span>
-                <span className="detail-value font-bold">{record.customerName}</span>
+          <div className="ticket-sections-wrapper space-y-4">
+            <div className="ticket-section detail-box-light mb-4">
+              <h5 className="ticket-section-title font-bold text-xs uppercase tracking-wider text-slate-500 mb-3">Customer Information</h5>
+              <div className="ticket-detail-item flex justify-between py-1 text-sm">
+                <span className="detail-label text-slate-500">Full Name:</span>
+                <span className="detail-value font-bold text-slate-900">{record.customerName}</span>
               </div>
-              <div className="ticket-detail-item">
-                <span className="detail-label">Mobile Number:</span>
-                <span className="detail-value">
-                  <Phone className="icon-xs inline-icon" />
+              <div className="ticket-detail-item flex justify-between py-1 text-sm">
+                <span className="detail-label text-slate-500">Mobile Number:</span>
+                <span className="detail-value font-semibold text-slate-900 flex items-center gap-1">
+                  <Phone className="icon-xs text-primary" />
                   {record.mobileNumber}
                 </span>
               </div>
-              <div className="ticket-detail-item">
-                <span className="detail-label">Address:</span>
-                <span className="detail-value">
-                  <MapPin className="icon-xs inline-icon" />
+              <div className="ticket-detail-item flex justify-between py-1 text-sm">
+                <span className="detail-label text-slate-500">Address:</span>
+                <span className="detail-value font-semibold text-slate-900 flex items-center gap-1">
+                  <MapPin className="icon-xs text-primary" />
                   {record.address || 'Not specified'}
                 </span>
               </div>
             </div>
 
-            <div className="ticket-section">
-              <h5 className="ticket-section-title">Service Workflow Details</h5>
-              <div className="ticket-detail-item">
-                <span className="detail-label">Service Type:</span>
-                <span className="detail-value highlight-service">{record.serviceType}</span>
+            <div className="ticket-section detail-box-light mb-4">
+              <h5 className="ticket-section-title font-bold text-xs uppercase tracking-wider text-slate-500 mb-3">Service Workflow Details</h5>
+              <div className="ticket-detail-item flex justify-between py-1 text-sm">
+                <span className="detail-label text-slate-500">Service Type:</span>
+                <span className="detail-value font-bold text-blue-600">{record.serviceType}</span>
               </div>
-              <div className="ticket-detail-item">
-                <span className="detail-label">Requirement:</span>
+              <div className="ticket-detail-item flex justify-between py-1 text-sm">
+                <span className="detail-label text-slate-500">Requirement:</span>
                 <span className="detail-value font-bold text-primary">{record.requirement || '—'}</span>
               </div>
-              <div className="ticket-detail-item">
-                <span className="detail-label">Description:</span>
-                <span className="detail-value">{record.workDescription || 'No additional notes'}</span>
+              <div className="ticket-detail-item flex justify-between py-1 text-sm">
+                <span className="detail-label text-slate-500">Description:</span>
+                <span className="detail-value font-medium text-slate-700">{record.workDescription || 'No additional notes'}</span>
               </div>
-              <div className="ticket-detail-item">
-                <span className="detail-label">Entry Date:</span>
-                <span className="detail-value">{formatDateTime(record.createdAt)}</span>
+              <div className="ticket-detail-item flex justify-between py-1 text-sm">
+                <span className="detail-label text-slate-500">Entry Date:</span>
+                <span className="detail-value font-medium text-slate-700">{formatDateTime(record.createdAt)}</span>
               </div>
             </div>
           </div>
 
           {/* Payment Summary Box */}
-          <div className="modal-billing-summary">
-            <h5 className="ticket-section-title">Payment Summary</h5>
-            <div className="billing-rows">
-              <div className="billing-row">
-                <span>Total Service Amount:</span>
-                <span className="font-bold">{formatCurrency(record.totalAmount)}</span>
+          <div className="modal-billing-summary detail-box-light mt-4">
+            <h5 className="ticket-section-title font-bold text-xs uppercase tracking-wider text-slate-500 mb-3">Payment Summary</h5>
+            <div className="billing-rows space-y-2">
+              <div className="billing-row flex justify-between text-sm">
+                <span className="text-slate-600">Total Service Amount:</span>
+                <span className="font-bold text-slate-900">{formatCurrency(record.totalAmount)}</span>
               </div>
-              <div className="billing-row">
-                <span>Amount Paid:</span>
-                <span className="font-bold text-green">{formatCurrency(record.paidAmount)}</span>
+              <div className="billing-row flex justify-between text-sm">
+                <span className="text-slate-600">Amount Paid:</span>
+                <span className="font-bold text-green-600">{formatCurrency(record.paidAmount)}</span>
               </div>
-              <div className="billing-row remaining-row">
-                <span>Remaining Due Balance:</span>
-                <span className={`font-bold ${hasBalance ? 'text-red' : 'text-green'}`}>
+              <div className="billing-row remaining-row flex justify-between text-sm pt-2 border-t border-slate-200">
+                <span className="font-bold text-slate-800">Remaining Due Balance:</span>
+                <span className={`font-bold ${hasBalance ? 'text-red-600' : 'text-green-600'}`}>
                   {formatCurrency(record.remainingBalance)}
                 </span>
               </div>
