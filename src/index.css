@@ -1401,6 +1401,17 @@ body {
   border: 1px solid #dbeafe;
 }
 
+.requirement-tag {
+  display: inline-block;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #475569;
+  background: #f8fafc;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #e2e8f0;
+}
+
 .work-desc-preview {
   font-size: 0.74rem;
   color: var(--neutral-500);

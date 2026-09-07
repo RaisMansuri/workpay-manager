@@ -5,7 +5,7 @@ import {
   Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus, Info, X, Calendar, SlidersHorizontal
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
-import { WORK_STATUS, SEVA_SERVICES } from '../constants/serviceTypes';
+import { WORK_STATUS, SEVA_SERVICES, CUSTOMER_REQUIREMENTS } from '../constants/serviceTypes';
 
 // Reusable Service Info Tooltip Component
 const ServiceInfoTooltip = ({ tooltipId, activeTooltipId, setActiveTooltipId, serviceType, workDescription }) => {
@@ -307,6 +307,7 @@ export const CustomerTable = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [selectedRequirement, setSelectedRequirement] = useState('All');
   const [selectedService, setSelectedService] = useState('All');
   const [selectedDateOption, setSelectedDateOption] = useState('All Time');
   const [fromDate, setFromDate] = useState('');
@@ -338,7 +339,7 @@ export const CustomerTable = ({
   // Reset to Page 1 when filters or search change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedStatus, selectedService, selectedDateOption, fromDate, toDate, rowsPerPage]);
+  }, [searchTerm, selectedStatus, selectedRequirement, selectedService, selectedDateOption, fromDate, toDate, rowsPerPage]);
 
   // Helper for generating Customer Initials Avatar
   const getInitials = (name) => {
@@ -426,7 +427,7 @@ export const CustomerTable = ({
     return true;
   };
 
-  // Filter records based on Search, Status, Service Type, and Date Filter
+  // Filter records based on Search, Status, Requirement, Service Type, and Date Filter
   const filteredRecords = records.filter((record) => {
     const query = searchTerm.trim().toLowerCase();
     const matchesSearch =
@@ -434,26 +435,32 @@ export const CustomerTable = ({
       (record.customerName && record.customerName.toLowerCase().includes(query)) ||
       (record.mobileNumber && record.mobileNumber.includes(query)) ||
       (record.address && record.address.toLowerCase().includes(query)) ||
+      (record.requirement && record.requirement.toLowerCase().includes(query)) ||
       (record.serviceType && record.serviceType.toLowerCase().includes(query));
 
     const matchesStatus =
       selectedStatus === 'All' || record.status === selectedStatus;
+
+    const matchesRequirement =
+      selectedRequirement === 'All' || record.requirement === selectedRequirement;
 
     const matchesService =
       selectedService === 'All' || record.serviceType === selectedService;
 
     const matchesDate = filterByDateOption(record.createdAt, selectedDateOption, fromDate, toDate);
 
-    return matchesSearch && matchesStatus && matchesService && matchesDate;
+    return matchesSearch && matchesStatus && matchesRequirement && matchesService && matchesDate;
   });
 
   const activeFilterCount =
     (selectedStatus !== 'All' ? 1 : 0) +
+    (selectedRequirement !== 'All' ? 1 : 0) +
     (selectedService !== 'All' ? 1 : 0) +
     (selectedDateOption !== 'All Time' ? 1 : 0);
 
-  const handleApplyMobileFilters = ({ status, service, dateOption, fromDate: fD, toDate: tD }) => {
+  const handleApplyMobileFilters = ({ status, requirement, service, dateOption, fromDate: fD, toDate: tD }) => {
     setSelectedStatus(status);
+    if (requirement !== undefined) setSelectedRequirement(requirement);
     setSelectedService(service);
     setSelectedDateOption(dateOption);
     setFromDate(fD);
@@ -463,6 +470,7 @@ export const CustomerTable = ({
 
   const handleResetMobileFilters = () => {
     setSelectedStatus('All');
+    setSelectedRequirement('All');
     setSelectedService('All');
     setSelectedDateOption('All Time');
     setFromDate('');
@@ -637,6 +645,23 @@ export const CustomerTable = ({
             </select>
           </div>
 
+          {/* Requirement Dropdown Filter */}
+          <div className="service-filter-wrapper">
+            <SlidersHorizontal className="input-icon" />
+            <select
+              className="form-select service-select-sm"
+              value={selectedRequirement}
+              onChange={(e) => setSelectedRequirement(e.target.value)}
+            >
+              <option value="All">All Requirements ({records.length})</option>
+              {CUSTOMER_REQUIREMENTS.map((req) => (
+                <option key={req} value={req}>
+                  {req} ({records.filter((r) => r.requirement === req).length})
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Service Dropdown Filter */}
           <div className="service-filter-wrapper">
             <Filter className="input-icon" />
@@ -723,6 +748,7 @@ export const CustomerTable = ({
             <tr>
               <th>Customer Name & Address</th>
               <th>Mobile</th>
+              <th>Requirement</th>
               <th>Service Type</th>
               <th>Work Status</th>
               <th className="text-right">Total</th>
@@ -735,7 +761,7 @@ export const CustomerTable = ({
           <tbody>
             {paginatedRecords.length === 0 ? (
               <tr>
-                <td colSpan={9} className="empty-state">
+                <td colSpan={10} className="empty-state">
                   <div className="empty-state-content">
                     <Inbox className="empty-icon" />
                     <h4>No Customer Records Found</h4>
@@ -782,6 +808,15 @@ export const CustomerTable = ({
                         <Phone className="icon-xs" />
                         {record.mobileNumber}
                       </a>
+                    </td>
+
+                    {/* Requirement */}
+                    <td className="cell-requirement">
+                      {record.requirement ? (
+                        <span className="requirement-tag">{record.requirement}</span>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
                     </td>
 
                     {/* Service Type with Info Tooltip */}

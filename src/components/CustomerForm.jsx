@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
   UserPlus, Save, RotateCcw, Calculator, FileText, Phone, User, MapPin, 
-  IndianRupee, CheckCircle2, Clock, Layers, CreditCard, X 
+  IndianRupee, CheckCircle2, Clock, Layers, CreditCard, X, SlidersHorizontal 
 } from 'lucide-react';
-import { SEVA_SERVICES, WORK_STATUS } from '../constants/serviceTypes';
+import { SEVA_SERVICES, WORK_STATUS, CUSTOMER_REQUIREMENTS } from '../constants/serviceTypes';
 import { formatCurrency, generateNextCustomerId } from '../utils/formatters';
 
 export const CustomerForm = ({ 
@@ -21,6 +21,7 @@ export const CustomerForm = ({
     address: '',
     serviceType: SEVA_SERVICES[0],
     customServiceType: '',
+    requirement: '',
     workDescription: '',
     status: WORK_STATUS.PENDING,
     totalAmount: '',
@@ -52,6 +53,7 @@ export const CustomerForm = ({
         address: editingRecord.address || '',
         serviceType: isCustom ? 'Other Custom Service' : editingRecord.serviceType,
         customServiceType: isCustom ? editingRecord.serviceType : '',
+        requirement: editingRecord.requirement || '',
         workDescription: editingRecord.workDescription || '',
         status: editingRecord.status || WORK_STATUS.PENDING,
         totalAmount: editingRecord.totalAmount !== undefined ? editingRecord.totalAmount : '',
@@ -66,6 +68,7 @@ export const CustomerForm = ({
         address: '',
         serviceType: SEVA_SERVICES[0],
         customServiceType: '',
+        requirement: '',
         workDescription: '',
         status: WORK_STATUS.PENDING,
         totalAmount: '',
@@ -146,6 +149,7 @@ export const CustomerForm = ({
       mobileNumber: formData.mobileNumber.trim(),
       address: formData.address.trim(),
       serviceType: finalServiceType,
+      requirement: formData.requirement,
       workDescription: formData.workDescription.trim(),
       status: formData.status,
       totalAmount: Number(formData.totalAmount),
@@ -277,6 +281,26 @@ export const CustomerForm = ({
                   {errors.customServiceType && <span className="invalid-feedback">{errors.customServiceType}</span>}
                 </div>
               )}
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="requirement">
+                  <SlidersHorizontal className="input-icon" />
+                  Customer Requirement *
+                </label>
+                <select
+                  id="requirement"
+                  className="form-select"
+                  value={formData.requirement}
+                  onChange={(e) => handleInputChange('requirement', e.target.value)}
+                >
+                  <option value="">-- Select Requirement --</option>
+                  {CUSTOMER_REQUIREMENTS.map((req) => (
+                    <option key={req} value={req}>
+                      {req}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="workDescription">

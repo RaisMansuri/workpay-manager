@@ -12,7 +12,7 @@ export const SEVA_SERVICES = [
   "Gazette Name Change",
   "Utility Bill Payment / Subsidies",
   "PM-Kisan / Govt Pension Registration",
-  "Other Custom Service"
+  "Other Service"
 ];
 
 export const WORK_STATUS = {
@@ -20,3 +20,10 @@ export const WORK_STATUS = {
   IN_PROGRESS: "In Progress",
   COMPLETED: "Completed"
 };
+
+export const CUSTOMER_REQUIREMENTS = [
+  "Enquiry",
+  "New Application",
+  "Update / Correction",
+  "Renewal"
+];

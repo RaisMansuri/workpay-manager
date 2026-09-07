@@ -21,6 +21,7 @@ const mapRowToRecord = (row) => ({
   mobileNumber: row.mobile_number,
   address: row.address || '',
   serviceType: row.service_type,
+  requirement: row.requirement || '',
   workDescription: row.work_description || '',
   status: row.status,
   totalAmount: Number(row.total_amount) || 0,
@@ -39,6 +40,7 @@ const mapRecordToRow = (record) => ({
   mobile_number: record.mobileNumber,
   address: record.address || '',
   service_type: record.serviceType,
+  requirement: record.requirement || '',
   work_description: record.workDescription || '',
   status: record.status,
   total_amount: Number(record.totalAmount) || 0,
@@ -120,10 +122,25 @@ export const customerStorage = {
         row.created_at = nowISO;
       }
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('customer_records')
         .upsert(row, { onConflict: 'id' })
         .select('*');
+
+      // Fallback if requirement column is missing in PostgreSQL table schema cache
+      if (error && (error.code === 'PGRST204' || (error.message && error.message.includes('requirement')))) {
+        console.warn('Requirement column not found in Supabase schema cache. Retrying upsert without requirement field...');
+        const rowWithoutRequirement = { ...row };
+        delete rowWithoutRequirement.requirement;
+
+        const retryRes = await supabase
+          .from('customer_records')
+          .upsert(rowWithoutRequirement, { onConflict: 'id' })
+          .select('*');
+
+        data = retryRes.data;
+        error = retryRes.error;
+      }
 
       if (error) {
         console.error('Supabase PostgreSQL save error:', error);

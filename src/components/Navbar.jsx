@@ -53,6 +53,7 @@ export const Navbar = ({ onExportCSV, onOpenNewDrawer }) => {
             <span>{todayDateStr}</span>
           </div>
 
+          {/* Temporarily commented out Export CSV button as requested
           <button
             className="btn-header btn-export-header"
             onClick={onExportCSV}
@@ -61,6 +62,7 @@ export const Navbar = ({ onExportCSV, onOpenNewDrawer }) => {
             <Download className="icon-sm" />
             <span className="btn-export-text">Export CSV</span>
           </button>
+          */}
         </div>
       </div>
     </header>
