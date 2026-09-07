@@ -17,12 +17,11 @@ export const emailService = {
    */
   sendNewEntryNotification: async (record) => {
     if (!isValidUuid(WEB3FORMS_KEY)) {
-      console.log('ℹ️ Web3Forms email notifications ready. Add your free Web3Forms UUID access key in .env to send live emails.');
       return { success: false, reason: 'WEB3FORMS_KEY_INVALID' };
     }
 
     const emailSubject = `🔔 New Customer Entry: ${record.customerName} (${record.serviceType})`;
-    
+
     const emailBody = `
 ===============================================
 SEVA KENDRA MANAGEMENT SYSTEM - NEW ENTRY
@@ -63,14 +62,11 @@ Entry Date & Time: ${formatDateTime(record.createdAt)}
 
       const result = await response.json();
       if (result.success) {
-        console.log(`✉️ Email notification sent successfully for ${record.customerName}!`);
         return { success: true };
       } else {
-        console.log('Email API notice:', result.message);
         return { success: false, message: result.message };
       }
     } catch (err) {
-      console.warn('Email notification dispatch error:', err.message);
       return { success: false, error: err.message };
     }
   }

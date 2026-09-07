@@ -85,8 +85,13 @@ html, body {
   min-height: 100vh;
 }
 
+html {
+  font-size: 15px; /* System-wide font size reduced by 1 point (default 16px -> 15px) */
+}
+
 body {
   font-family: var(--font-family);
+  font-size: 0.9375rem;
   background-color: var(--bg-main);
   background-image: 
     radial-gradient(circle at 5% 10%, rgba(37, 99, 235, 0.05) 0%, transparent 35%),
@@ -1401,15 +1406,22 @@ body {
   border: 1px solid #dbeafe;
 }
 
+.cell-requirement {
+  white-space: nowrap;
+}
+
 .requirement-tag {
-  display: inline-block;
-  font-size: 0.76rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: #475569;
-  background: #f8fafc;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid #e2e8f0;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
 .work-desc-preview {

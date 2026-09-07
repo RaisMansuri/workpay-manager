@@ -16,10 +16,8 @@ if (fs.existsSync(envPath)) {
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 
-console.log('🔄 Checking Supabase PostgreSQL database table status...');
 
 if (!supabaseUrl || !supabaseKey) {
-  console.log('⚠️ Supabase credentials not fully set in .env. Skipping auto migration check.');
   process.exit(0);
 }
 
@@ -41,19 +39,13 @@ async function checkAndMigrate() {
       .limit(1);
 
     if (!error) {
-      console.log('✅ Connected to live Supabase PostgreSQL! Table customer_records is ready.');
       process.exit(0);
     }
 
     if (error.code === 'PGRST205' || error.message?.includes('customer_records')) {
-      console.log('ℹ️ Table customer_records not found in schema cache.');
-      console.log('📌 Please run supabase_schema.sql once in Supabase SQL Editor:');
-      console.log(`   https://supabase.com/dashboard/project/nqnyhqkwskvkstpqjvkv/editor`);
     } else {
-      console.log('ℹ️ Supabase response:', error.message);
     }
   } catch (err) {
-    console.error('Migration check notice:', err.message);
   }
 }
 

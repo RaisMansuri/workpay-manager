@@ -108,7 +108,6 @@ Thank you for visiting our Kendra.`;
 
         // A. Confirmed Twilio SID Delivery
         if (!error && data && data.success && data.sid) {
-          console.log(`✅ SMS Sent Successfully to ${customerMobile}! SID: ${data.sid}`);
           smsService.logNotification(record, 'SMS Sent Successfully', null, data.sid);
           return {
             success: true,
@@ -135,7 +134,6 @@ Thank you for visiting our Kendra.`;
 
         // C. Network / Edge Function Invoke Error
         if (error) {
-          console.log('ℹ️ Edge Function send-sms notice:', error.message);
           const demoStatus = 'SMS Pending / Demo Mode';
           const demoError = "Edge Function 'send-sms' is not deployed yet or secrets not set.";
           smsService.logNotification(record, demoStatus, demoError);
@@ -161,7 +159,6 @@ Thank you for visiting our Kendra.`;
       };
 
     } catch (err) {
-      console.log('SMS Edge Function dispatch notice:', err.message);
       const errStatus = 'SMS Pending / Demo Mode';
       const errDetail = err.message || 'SMS dispatch failed';
       smsService.logNotification(record, errStatus, errDetail);

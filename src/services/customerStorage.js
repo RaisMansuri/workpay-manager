@@ -110,6 +110,7 @@ export const customerStorage = {
 
     const formattedRecord = {
       ...record,
+      createdAt: record.createdAt || nowISO,
       totalAmount: total,
       paidAmount: paid,
       remainingBalance,
