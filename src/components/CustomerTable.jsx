@@ -4,7 +4,7 @@ import {
   Search, Filter, Edit3, Trash2, Eye, Clock, RotateCcw, Download,
   Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus, Info, X, Calendar, SlidersHorizontal, Users, User, ChevronDown, Check
 } from 'lucide-react';
-import { formatCurrency, formatDateTime } from '../utils/formatters';
+import { formatCurrency, formatDateTime, formatDateOnly, formatTimeOnly } from '../utils/formatters';
 import { WORK_STATUS, SEVA_SERVICES, CUSTOMER_REQUIREMENTS } from '../constants/serviceTypes';
 import { staffService } from '../services/staffService';
 
@@ -1045,7 +1045,10 @@ export const CustomerTable = ({
 
                     {/* Date & Time */}
                     <td className="cell-date">
-                      <span className="date-text">{formatDateTime(record.createdAt)}</span>
+                      <div className="date-time-stacked">
+                        <span className="font-semibold text-dark block">{formatDateOnly(record.createdAt)}</span>
+                        <span className="text-xs text-muted block">{formatTimeOnly(record.createdAt)}</span>
+                      </div>
                     </td>
 
                     {/* Created By Staff Member */}

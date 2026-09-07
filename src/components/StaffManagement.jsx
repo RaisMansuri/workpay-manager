@@ -301,6 +301,9 @@ export const StaffManagement = ({ profile }) => {
                 <th>Contact Details</th>
                 <th>Role</th>
                 <th>Status</th>
+                <th>Session</th>
+                <th>Last Login</th>
+                <th>Last Logout</th>
                 <th>Created Date</th>
                 <th className="text-center">Actions</th>
               </tr>
@@ -308,14 +311,14 @@ export const StaffManagement = ({ profile }) => {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-5">
+                  <td colSpan="9" className="text-center py-5">
                     <Loader2 className="icon-lg spinner-icon text-primary mb-2" />
                     <p className="text-muted">Loading live staff records...</p>
                   </td>
                 </tr>
               ) : paginatedStaff.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-5">
+                  <td colSpan="9" className="text-center py-5">
                     <Users className="icon-xl text-muted mb-2" />
                     <p className="font-semibold text-dark">No staff members found</p>
                     <p className="text-sm text-muted">Try adjusting your search filter</p>
@@ -325,7 +328,7 @@ export const StaffManagement = ({ profile }) => {
                 paginatedStaff.map((staff) => {
                   const isActive = staff.status === 'active';
                   const isAdmin = staff.role === 'admin';
-                  const isMenuOpen = activeMenuId === staff.id;
+                  const isOnline = staff.last_login_at && (!staff.last_logout_at || new Date(staff.last_login_at).getTime() > new Date(staff.last_logout_at).getTime());
 
                   return (
                     <tr key={staff.id} className="table-row-hover">
@@ -359,6 +362,21 @@ export const StaffManagement = ({ profile }) => {
                           {isActive ? <CheckCircle2 className="icon-xs mr-1" /> : <XCircle className="icon-xs mr-1" />}
                           {isActive ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+
+                      <td>
+                        <span className={`badge ${isOnline ? 'badge-online' : 'badge-offline'}`}>
+                          <span className={isOnline ? 'pulse-dot-online' : 'dot-offline'} />
+                          {isOnline ? 'Online' : 'Offline'}
+                        </span>
+                      </td>
+
+                      <td className="text-sm font-medium text-dark">
+                        {staff.last_login_at ? formatDateTime(staff.last_login_at) : 'Never logged in'}
+                      </td>
+
+                      <td className="text-sm text-muted">
+                        {staff.last_logout_at ? formatDateTime(staff.last_logout_at) : 'N/A'}
                       </td>
 
                       <td className="text-sm text-muted">
@@ -422,6 +440,7 @@ export const StaffManagement = ({ profile }) => {
             paginatedStaff.map((staff) => {
               const isActive = staff.status === 'active';
               const isAdmin = staff.role === 'admin';
+              const isOnline = staff.last_login_at && (!staff.last_logout_at || new Date(staff.last_login_at).getTime() > new Date(staff.last_logout_at).getTime());
 
               return (
                 <div key={staff.id} className="mobile-card">
@@ -442,6 +461,13 @@ export const StaffManagement = ({ profile }) => {
 
                   <div className="mobile-card-body">
                     <div className="mobile-row">
+                      <span className="mobile-label">Session:</span>
+                      <span className={`badge ${isOnline ? 'badge-online' : 'badge-offline'}`}>
+                        <span className={isOnline ? 'pulse-dot-online' : 'dot-offline'} />
+                        {isOnline ? 'Online' : 'Offline'}
+                      </span>
+                    </div>
+                    <div className="mobile-row">
                       <span className="mobile-label">Role:</span>
                       <span className={`badge ${isAdmin ? 'badge-role-admin' : 'badge-role-staff'}`}>
                         {isAdmin ? 'Administrator' : 'Staff'}
@@ -452,7 +478,19 @@ export const StaffManagement = ({ profile }) => {
                       <span className="mobile-val">{staff.mobile || 'Not set'}</span>
                     </div>
                     <div className="mobile-row">
-                      <span className="mobile-label">Joined:</span>
+                      <span className="mobile-label">Last Login:</span>
+                      <span className="mobile-val font-semibold text-dark">
+                        {staff.last_login_at ? formatDateTime(staff.last_login_at) : 'Never'}
+                      </span>
+                    </div>
+                    {staff.last_logout_at && (
+                      <div className="mobile-row">
+                        <span className="mobile-label">Last Logout:</span>
+                        <span className="mobile-val text-muted">{formatDateTime(staff.last_logout_at)}</span>
+                      </div>
+                    )}
+                    <div className="mobile-row">
+                      <span className="mobile-label">Created Date:</span>
                       <span className="mobile-val text-muted">{formatDateTime(staff.created_at)}</span>
                     </div>
                   </div>

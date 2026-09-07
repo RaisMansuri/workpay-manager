@@ -92,7 +92,7 @@ export const CreateStaffModal = ({ isOpen, onClose, onStaffCreated }) => {
         email: formData.email.trim(),
         mobile: formData.mobile.trim(),
         password: formData.password,
-        role: 'staff',
+        role: formData.role || 'staff',
         status: formData.status
       });
 
@@ -218,6 +218,20 @@ export const CreateStaffModal = ({ isOpen, onClose, onStaffCreated }) => {
                   }}
                 />
                 {errors.mobile && <span className="invalid-feedback">{errors.mobile}</span>}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  <User className="icon-xs text-primary" /> User Role
+                </label>
+                <select
+                  className="form-select"
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                >
+                  <option value="staff">Staff Member</option>
+                  <option value="admin">Administrator</option>
+                </select>
               </div>
 
               <div className="form-group">

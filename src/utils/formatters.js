@@ -50,6 +50,25 @@ export const formatDateOnly = (dateString) => {
 };
 
 /**
+ * Formats time as hh:mm AM/PM string
+ * e.g. "02:45 PM"
+ */
+export const formatTimeOnly = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strHours = String(hours).padStart(2, '0');
+
+  return `${strHours}:${minutes} ${ampm}`;
+};
+
+/**
  * Checks if an ISO date string corresponds to Today
  */
 export const isToday = (dateString) => {
