@@ -15,6 +15,8 @@ export function App() {
   const [viewingRecord, setViewingRecord] = useState(null);
   const [deletingRecord, setDeletingRecord] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Reload records asynchronously from Supabase PostgreSQL / Storage
@@ -68,27 +70,29 @@ export function App() {
 
   // Handle Save (Add or Edit)
   const handleSaveRecord = async (record, isEdit) => {
-    // 1. First save customer record in Supabase
-    const result = await customerStorage.saveRecordAsync(record);
-    if (result.success) {
-      setRecords(result.records);
-      setEditingRecord(null);
-      setIsDrawerOpen(false); // Automatically close sliding drawer after successful save
+    setIsSaving(true);
+    try {
+      // 1. First save customer record in Supabase
+      const result = await customerStorage.saveRecordAsync(record);
+      if (result.success) {
+        setRecords(result.records);
+        setEditingRecord(null);
+        setIsDrawerOpen(false); // Automatically close sliding drawer after successful save
 
-      const savedRecord = result.record || record;
+        const savedRecord = result.record || record;
 
-      // 2. Trigger Supabase Edge Function to send SMS to customer's mobile_number
-      const smsRes = await smsService.sendCustomerSmsNotification(savedRecord);
+        // 2. Trigger Supabase Edge Function to send SMS to customer's mobile_number asynchronously
+        smsService.sendCustomerSmsNotification(savedRecord).catch(err => {
+          console.warn('SMS notice:', err);
+        });
 
-      if (smsRes.success) {
-        showToast(`Customer entry saved! SMS Sent Successfully to ${smsRes.recipient}`, 'success');
-      } else if (smsRes.status === 'SMS Pending / Demo Mode') {
-        showToast(`Customer entry saved! (SMS Status: SMS Pending / Demo Mode)`, 'info');
+        // Show clean small success toaster message
+        showToast(isEdit ? 'Updated successfully!' : 'Saved successfully!', 'success');
       } else {
-        showToast(`Customer entry saved! (SMS Status: ${smsRes.error || 'SMS Failed'})`, 'info');
+        showToast(`Failed to save record: ${result.error}`, 'error');
       }
-    } else {
-      showToast(`Failed to save record: ${result.error}`, 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -105,23 +109,28 @@ export function App() {
 
   // Handle Delete Action
   const handleConfirmDelete = async (id) => {
-    const targetRecord = records.find(r => r.id === id);
-    const result = await customerStorage.deleteRecordAsync(id);
-    if (result.success) {
-      setRecords(result.records);
-      setDeletingRecord(null);
-      if (editingRecord && editingRecord.id === id) {
-        setEditingRecord(null);
-        setIsDrawerOpen(false);
+    setIsDeleting(true);
+    try {
+      const targetRecord = records.find(r => r.id === id);
+      const result = await customerStorage.deleteRecordAsync(id);
+      if (result.success) {
+        setRecords(result.records);
+        setDeletingRecord(null);
+        if (editingRecord && editingRecord.id === id) {
+          setEditingRecord(null);
+          setIsDrawerOpen(false);
+        }
+        showToast(
+          targetRecord
+            ? `Customer record for ${targetRecord.customerName} deleted successfully!`
+            : 'Customer record deleted successfully!',
+          'success'
+        );
+      } else {
+        showToast(`Failed to delete record: ${result.error}`, 'error');
       }
-      showToast(
-        targetRecord 
-          ? `Customer record for ${targetRecord.customerName} deleted from DB.`
-          : 'Customer record deleted from DB.', 
-        'info'
-      );
-    } else {
-      showToast(`Failed to delete record: ${result.error}`, 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -144,7 +153,7 @@ export function App() {
     }
 
     const headers = ['Customer Name', 'Mobile Number', 'Address', 'Service Type', 'Work Description', 'Work Status', 'Total Amount (INR)', 'Paid Amount (INR)', 'Remaining Balance (INR)', 'Created Date'];
-    
+
     const rows = records.map(r => [
       `"${(r.customerName || '').replace(/"/g, '""')}"`,
       `"${r.mobileNumber}"`,
@@ -162,7 +171,7 @@ export function App() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `seva_kendra_records_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute('download', `seva_kendra_records_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -173,7 +182,7 @@ export function App() {
   return (
     <div className="app-layout">
       {/* Top Navbar Header with + New Entry Button */}
-      <Navbar 
+      <Navbar
         onExportCSV={handleExportCSV}
         onOpenNewDrawer={handleOpenNewDrawer}
       />
@@ -205,6 +214,7 @@ export function App() {
         onSave={handleSaveRecord}
         onCancelEdit={handleCancelEdit}
         existingRecords={records}
+        isSaving={isSaving}
       />
 
       {/* Detail & Delete Modals & Toast */}
@@ -221,6 +231,7 @@ export function App() {
           record={deletingRecord}
           onClose={() => setDeletingRecord(null)}
           onConfirm={handleConfirmDelete}
+          isDeleting={isDeleting}
         />
       )}
 

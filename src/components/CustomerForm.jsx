@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   UserPlus, Save, RotateCcw, Calculator, FileText, Phone, User, MapPin, 
-  IndianRupee, CheckCircle2, Clock, Layers, CreditCard, X, SlidersHorizontal 
+  IndianRupee, CheckCircle2, Clock, Layers, CreditCard, X, SlidersHorizontal, Loader2 
 } from 'lucide-react';
 import { SEVA_SERVICES, WORK_STATUS, CUSTOMER_REQUIREMENTS } from '../constants/serviceTypes';
 import { formatCurrency, generateNextCustomerId } from '../utils/formatters';
@@ -12,8 +12,11 @@ export const CustomerForm = ({
   editingRecord, 
   onSave, 
   onCancelEdit, 
-  existingRecords = [] 
+  existingRecords = [],
+  isSaving = false
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitting = isSubmitting || isSaving;
   const [formData, setFormData] = useState({
     id: '',
     customerName: '',
@@ -135,50 +138,55 @@ export const CustomerForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate() || submitting) return;
 
-    const finalServiceType = isCustomService 
-      ? formData.customServiceType.trim() 
-      : formData.serviceType;
+    setIsSubmitting(true);
+    try {
+      const finalServiceType = isCustomService 
+        ? formData.customServiceType.trim() 
+        : formData.serviceType;
 
-    const recordToSave = {
-      id: formData.id || generateNextCustomerId(existingRecords),
-      customerName: formData.customerName.trim(),
-      mobileNumber: formData.mobileNumber.trim(),
-      address: formData.address.trim(),
-      serviceType: finalServiceType,
-      requirement: formData.requirement,
-      workDescription: formData.workDescription.trim(),
-      status: formData.status,
-      totalAmount: Number(formData.totalAmount),
-      paidAmount: Number(formData.paidAmount),
-      remainingBalance: remainingBalance
-    };
+      const recordToSave = {
+        id: formData.id || generateNextCustomerId(existingRecords),
+        customerName: formData.customerName.trim(),
+        mobileNumber: formData.mobileNumber.trim(),
+        address: formData.address.trim(),
+        serviceType: finalServiceType,
+        requirement: formData.requirement,
+        workDescription: formData.workDescription.trim(),
+        status: formData.status,
+        totalAmount: Number(formData.totalAmount),
+        paidAmount: Number(formData.paidAmount),
+        remainingBalance: remainingBalance
+      };
 
-    onSave(recordToSave, !!editingRecord);
+      await onSave(recordToSave, !!editingRecord);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="drawer-backdrop" onClick={onClose}>
-      <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
+    <div className="drawer-backdrop" onClick={submitting ? undefined : onClose}>
+      <div className={`drawer-panel ${submitting ? 'panel-submitting-muted' : ''}`} onClick={(e) => e.stopPropagation()}>
         {/* Drawer Header */}
         <div className="drawer-header">
           <div className="drawer-title-group">
             <div className="drawer-header-icon-box">
-              <UserPlus className="icon-md" />
+              {submitting ? <Loader2 className="icon-md animate-spin" /> : <UserPlus className="icon-md" />}
             </div>
             <h3>{editingRecord ? 'Edit Customer Entry' : 'New Customer Entry'}</h3>
           </div>
-          <button className="drawer-close-btn" onClick={onClose} title="Close Drawer (Esc)">
+          <button className="drawer-close-btn" onClick={onClose} disabled={submitting} title="Close Drawer (Esc)">
             <X className="icon-sm" />
           </button>
         </div>
 
         {/* Drawer Form Body */}
         <form onSubmit={handleSubmit} className="drawer-form">
-          <div className="drawer-body-scroll">
+          <div className={`drawer-body-scroll ${submitting ? 'form-submitting-muted' : ''}`}>
             {/* SECTION 1: Customer Details */}
             <div className="form-section">
               <div className="form-section-title-row">
@@ -414,15 +422,25 @@ export const CustomerForm = ({
 
           {/* Sticky Drawer Footer */}
           <div className="drawer-footer-sticky">
-            <button type="submit" className="btn-submit-main flex-1">
-              <Save className="icon-md" />
-              <span>{editingRecord ? 'Update' : 'Save'}</span>
+            <button type="submit" className="btn-submit-main flex-1" disabled={submitting}>
+              {submitting ? (
+                <>
+                  <Loader2 className="icon-md animate-spin" />
+                  <span>{editingRecord ? 'Updating...' : 'Saving...'}</span>
+                </>
+              ) : (
+                <>
+                  <Save className="icon-md" />
+                  <span>{editingRecord ? 'Update' : 'Save'}</span>
+                </>
+              )}
             </button>
 
             <button 
               type="button" 
               className="btn btn-secondary" 
               onClick={onClose}
+              disabled={submitting}
             >
               Cancel
             </button>

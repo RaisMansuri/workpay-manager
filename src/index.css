@@ -1864,6 +1864,58 @@ body {
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.toast-success {
+  background: #f0fdf4 !important;
+  border: 1.5px solid #86efac !important;
+  box-shadow: 0 10px 25px rgba(22, 163, 74, 0.2) !important;
+}
+
+.toast-success .toast-content {
+  color: #166534 !important;
+}
+
+.toast-success .toast-icon {
+  color: #16a34a !important;
+}
+
+.toast-error {
+  background: #fef2f2 !important;
+  border: 1.5px solid #fca5a5 !important;
+  box-shadow: 0 10px 25px rgba(220, 38, 38, 0.2) !important;
+}
+
+.toast-error .toast-content {
+  color: #991b1b !important;
+}
+
+.toast-info {
+  background: #eff6ff !important;
+  border: 1.5px solid #93c5fd !important;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2) !important;
+}
+
+.toast-info .toast-content {
+  color: #1e40af !important;
+}
+
+/* Form Submitting Muted Screen & Disable State */
+.form-submitting-muted {
+  pointer-events: none !important;
+  opacity: 0.6 !important;
+  filter: grayscale(15%);
+  user-select: none !important;
+}
+
+.panel-submitting-muted {
+  cursor: wait !important;
+}
+
+.btn-submit-main:disabled {
+  opacity: 0.75 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
 @keyframes slideUp {
   0% { transform: translateY(20px); opacity: 0; }
   100% { transform: translateY(0); opacity: 1; }
