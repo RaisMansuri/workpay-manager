@@ -60,10 +60,10 @@ export function App() {
             setSession(authResult.session);
             setProfile(authResult.profile);
 
-            // Redirect logged-in users away from /login or default root
+            // Redirect logged-in users away from /login or default root or old /admin paths
             const path = window.location.pathname;
-            if (path === '/' || path === '/login') {
-              const target = authResult.profile.role === 'admin' ? '/admin/dashboard' : '/staff/dashboard';
+            if (path === '/' || path === '/login' || path.startsWith('/admin')) {
+              const target = (path === '/staff' || path === '/admin/staff') ? '/staff' : '/dashboard';
               navigate(target);
             }
           } else {
@@ -97,12 +97,8 @@ export function App() {
     setSession({ user });
     setProfile(userProfile);
 
-    // Redirect according to role
-    if (userProfile.role === 'admin') {
-      navigate('/admin/dashboard');
-    } else {
-      navigate('/staff/dashboard');
-    }
+    // Redirect to clean dashboard route
+    navigate('/dashboard');
   };
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -303,15 +299,15 @@ export function App() {
     showToast(`Exported ${records.length} customer records to CSV file.`, 'success');
   };
 
-  // Handle role-based URL redirection safely in useEffect
+  // Handle legacy /admin/ URL redirection safely in useEffect
   useEffect(() => {
     if (!session || !profile) return;
-    const userRole = (profile.role || '').toLowerCase();
-
-    if (userRole === 'staff' && currentPath.startsWith('/admin')) {
-      navigate('/staff/dashboard');
-    } else if (userRole === 'admin' && currentPath.startsWith('/staff')) {
-      navigate('/admin/dashboard');
+    if (currentPath.startsWith('/admin')) {
+      if (currentPath.includes('staff')) {
+        navigate('/staff');
+      } else {
+        navigate('/dashboard');
+      }
     }
   }, [session, profile, currentPath, navigate]);
 
@@ -367,7 +363,7 @@ export function App() {
   }
 
   // 4. Admin Role Access: Render full Admin Dashboard or Staff Management
-  const isStaffManagement = currentPath === '/admin/staff';
+  const isStaffManagement = currentPath === '/staff' || currentPath === '/staff-management';
 
   return (
     <div className="app-layout">
@@ -378,7 +374,7 @@ export function App() {
         onExportCSV={handleExportCSV}
         onOpenNewDrawer={handleOpenNewDrawer}
         activeTab={isStaffManagement ? 'staff' : 'dashboard'}
-        onTabChange={(tab) => navigate(tab === 'staff' ? '/admin/staff' : '/admin/dashboard')}
+        onTabChange={(tab) => navigate(tab === 'staff' ? '/staff' : '/dashboard')}
       />
 
       <main className="main-container">
