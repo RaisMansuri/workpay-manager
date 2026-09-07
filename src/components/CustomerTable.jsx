@@ -672,21 +672,45 @@ export const CustomerTable = ({
           </div>
 
           {selectedDateOption === 'Custom Date Range' && (
-            <div className="custom-date-inputs-desktop">
-              <input
-                type="date"
-                className="form-select service-select-sm"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                title="From Date"
-              />
-              <input
-                type="date"
-                className="form-select service-select-sm"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                title="To Date"
-              />
+            <div className="custom-date-picker-group animate-fade-in">
+              <div className="date-pill-control" title="Start Date (From)">
+                <span className="date-pill-prefix">From:</span>
+                <input
+                  type="date"
+                  className="clean-date-input"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  aria-label="From Date"
+                />
+              </div>
+
+              <span className="date-range-to-label">to</span>
+
+              <div className="date-pill-control" title="End Date (To)">
+                <span className="date-pill-prefix">To:</span>
+                <input
+                  type="date"
+                  className="clean-date-input"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  aria-label="To Date"
+                />
+              </div>
+
+              {(fromDate || toDate) && (
+                <button
+                  type="button"
+                  className="btn-clear-date-pill"
+                  onClick={() => {
+                    setFromDate('');
+                    setToDate('');
+                  }}
+                  title="Clear custom date selection"
+                  aria-label="Clear custom date filter"
+                >
+                  <X className="icon-xs" />
+                </button>
+              )}
             </div>
           )}
         </div>
