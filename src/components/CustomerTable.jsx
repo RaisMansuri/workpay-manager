@@ -83,6 +83,7 @@ const FilterPopover = ({
   anchorRef,
   records,
   selectedStatus,
+  selectedRequirement,
   selectedService,
   selectedDateOption,
   fromDate,
@@ -91,6 +92,7 @@ const FilterPopover = ({
   onResetFilters
 }) => {
   const [draftStatus, setDraftStatus] = useState(selectedStatus);
+  const [draftRequirement, setDraftRequirement] = useState(selectedRequirement || 'All');
   const [draftService, setDraftService] = useState(selectedService);
   const [draftDateOption, setDraftDateOption] = useState(selectedDateOption);
   const [draftFromDate, setDraftFromDate] = useState(fromDate);
@@ -101,12 +103,13 @@ const FilterPopover = ({
   useEffect(() => {
     if (isOpen) {
       setDraftStatus(selectedStatus);
+      setDraftRequirement(selectedRequirement || 'All');
       setDraftService(selectedService);
       setDraftDateOption(selectedDateOption);
       setDraftFromDate(fromDate);
       setDraftToDate(toDate);
     }
-  }, [isOpen, selectedStatus, selectedService, selectedDateOption, fromDate, toDate]);
+  }, [isOpen, selectedStatus, selectedRequirement, selectedService, selectedDateOption, fromDate, toDate]);
 
   // Calculate positioning coordinates relative to anchor button
   useEffect(() => {
@@ -171,6 +174,7 @@ const FilterPopover = ({
   const handleApply = () => {
     onApplyFilters({
       status: draftStatus,
+      requirement: draftRequirement,
       service: draftService,
       dateOption: draftDateOption,
       fromDate: draftFromDate,
@@ -222,6 +226,23 @@ const FilterPopover = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Customer Requirement Section */}
+          <div className="filter-section">
+            <label className="filter-section-label">Customer Requirement</label>
+            <select
+              className="form-select filter-select"
+              value={draftRequirement}
+              onChange={(e) => setDraftRequirement(e.target.value)}
+            >
+              <option value="All">All Requirements</option>
+              {CUSTOMER_REQUIREMENTS.map((req) => (
+                <option key={req} value={req}>
+                  {req}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Service Type Section */}
@@ -951,15 +972,20 @@ export const CustomerTable = ({
                   </a>
                 </div>
 
-                {/* 3. Service Tag with Info Tooltip */}
+                {/* 3. Requirement & Service Tag with Info Tooltip */}
                 <div className="ledger-service-row">
-                  <ServiceInfoTooltip
-                    tooltipId={`mb-svc-${record.id}`}
-                    activeTooltipId={activeTooltipId}
-                    setActiveTooltipId={setActiveTooltipId}
-                    serviceType={record.serviceType}
-                    workDescription={record.workDescription}
-                  />
+                  <div className="ledger-tags-wrap">
+                    {record.requirement && (
+                      <span className="requirement-tag">{record.requirement}</span>
+                    )}
+                    <ServiceInfoTooltip
+                      tooltipId={`mb-svc-${record.id}`}
+                      activeTooltipId={activeTooltipId}
+                      setActiveTooltipId={setActiveTooltipId}
+                      serviceType={record.serviceType}
+                      workDescription={record.workDescription}
+                    />
+                  </div>
                 </div>
 
                 {/* 4. 3-Column Khata Book Ledger Payment Grid */}
@@ -1034,6 +1060,7 @@ export const CustomerTable = ({
         anchorRef={activeAnchorRef}
         records={records}
         selectedStatus={selectedStatus}
+        selectedRequirement={selectedRequirement}
         selectedService={selectedService}
         selectedDateOption={selectedDateOption}
         fromDate={fromDate}

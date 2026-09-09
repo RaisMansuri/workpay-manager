@@ -2595,6 +2595,23 @@ body {
     min-width: 0 !important;
   }
 
+  .ledger-tags-wrap {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+  }
+
+  .requirement-tag {
+    font-size: 0.72rem !important;
+    padding: 2px 7px !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
   .service-tag {
     font-size: 0.72rem !important;
     padding: 2px 7px !important;

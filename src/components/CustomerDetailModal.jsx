@@ -97,6 +97,16 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
                 <span className="detail-value highlight-service">{record.serviceType}</span>
               </div>
               <div className="ticket-detail-item">
+                <span className="detail-label">Requirement:</span>
+                <span className="detail-value">
+                  {record.requirement ? (
+                    <span className="requirement-tag">{record.requirement}</span>
+                  ) : (
+                    'Not specified'
+                  )}
+                </span>
+              </div>
+              <div className="ticket-detail-item">
                 <span className="detail-label">Description:</span>
                 <span className="detail-value">{record.workDescription || 'No additional notes'}</span>
               </div>
