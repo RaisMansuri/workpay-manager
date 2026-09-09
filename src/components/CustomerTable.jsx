@@ -800,15 +800,17 @@ export const CustomerTable = ({
                     key={record.id}
                     className={`table-row ${isEditingThis ? 'editing-row' : ''}`}
                   >
-                    {/* Customer Name with Initials Avatar & Location Icon Tooltip */}
+                    {/* Customer Name with Location Icon Tooltip */}
                     <td className="cell-customer">
                       <div className="customer-cell-container">
+                        {/* 
                         <div
                           className="customer-avatar"
                           style={{ background: getAvatarGradient(record.customerName) }}
                         >
                           {getInitials(record.customerName)}
                         </div>
+                        */}
                         <div className="customer-name-wrapper">
                           <div className="customer-name-row">
                             <strong className="customer-name">{record.customerName}</strong>
@@ -941,12 +943,14 @@ export const CustomerTable = ({
                 {/* 1. Header: Avatar | Name + Location Icon | Status Badge */}
                 <div className="ledger-card-header">
                   <div className="ledger-customer-info">
+                    {/* 
                     <div
                       className="customer-avatar"
                       style={{ background: getAvatarGradient(record.customerName) }}
                     >
                       {getInitials(record.customerName)}
                     </div>
+                    */}
                     <div className="ledger-customer-details">
                       <div className="customer-name-row">
                         <h4 className="ledger-customer-name">{record.customerName}</h4>
