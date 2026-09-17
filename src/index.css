@@ -1834,20 +1834,31 @@ body {
 
 .ticket-detail-item {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  margin-bottom: 0.6rem;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
   font-size: 0.85rem;
 }
 
 .detail-label {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--neutral-500);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .detail-value {
   font-weight: 600;
   color: var(--neutral-900);
+  text-align: right;
+  word-break: break-word;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  flex-wrap: wrap;
 }
 
 .modal-billing-summary {
@@ -2777,25 +2788,27 @@ body {
   }
 
   .modal-backdrop {
-    padding: 0.5rem !important;
+    padding: 0.65rem !important;
     align-items: flex-end !important;
+    justify-content: center !important;
   }
 
   .modal-content {
     width: 100% !important;
-    max-width: 100% !important;
-    border-bottom-left-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-    border-top-left-radius: var(--radius-xl) !important;
-    border-top-right-radius: var(--radius-xl) !important;
-    max-height: 92vh !important;
-    margin: 0 !important;
+    max-width: 520px !important;
+    max-height: 88vh !important;
+    border-radius: var(--radius-xl) !important;
+    margin: 0 auto !important;
     overflow-y: auto !important;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.28) !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
   }
 
   .modal-header {
-    padding: 1rem 1.15rem !important;
+    padding: 1.1rem 1.25rem !important;
     gap: 0.5rem !important;
+    border-top-left-radius: var(--radius-xl) !important;
+    border-top-right-radius: var(--radius-xl) !important;
   }
 
   .modal-header-brand {
@@ -2811,7 +2824,13 @@ body {
   }
 
   .modal-body {
-    padding: 1rem 1.15rem !important;
+    padding: 1.1rem 1.25rem !important;
+  }
+
+  .modal-billing-summary {
+    padding: 0.85rem 1rem !important;
+    margin-top: 0.85rem !important;
+    border-radius: var(--radius-lg) !important;
   }
 
   .btn-text-desktop {
@@ -2823,15 +2842,15 @@ body {
   }
 
   .modal-footer {
-    padding: 0.75rem 0.85rem !important;
+    padding: 0.85rem 1.15rem !important;
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
     justify-content: space-between !important;
     gap: 0.45rem !important;
-    border-bottom-left-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
+    border-bottom-left-radius: var(--radius-xl) !important;
+    border-bottom-right-radius: var(--radius-xl) !important;
   }
 
   .modal-footer .btn {
@@ -2864,6 +2883,8 @@ body {
   .ticket-badge-row {
     flex-wrap: wrap !important;
     gap: 0.5rem !important;
+    margin-bottom: 1rem !important;
+    padding-bottom: 0.75rem !important;
   }
 
   .ticket-badge-row h4 {
@@ -2873,6 +2894,7 @@ body {
   .ticket-grid {
     grid-template-columns: 1fr !important;
     gap: 0.85rem !important;
+    margin-bottom: 1rem !important;
   }
 
   /* Mobile Pagination Footer & Clear Filters Button */
