@@ -1690,6 +1690,15 @@ body {
 /* ==========================================================================
    MODALS & TOAST NOTIFICATIONS
    ========================================================================== */
+/* Prevent background scrolling when modal or drawer backdrop is open */
+body.modal-open,
+body:has(.modal-backdrop),
+html:has(.modal-backdrop) {
+  overflow: hidden !important;
+  touch-action: none !important;
+  height: 100vh !important;
+}
+
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -1713,6 +1722,8 @@ body {
   max-width: 580px;
   max-height: 90vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   border: 1px solid rgba(226, 232, 240, 0.8);
   animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -2798,8 +2809,8 @@ body {
   }
 
   .modal-backdrop {
-    padding: 0.65rem !important;
-    align-items: flex-end !important;
+    padding: 0.75rem !important;
+    align-items: center !important;
     justify-content: center !important;
   }
 

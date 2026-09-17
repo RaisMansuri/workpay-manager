@@ -1,10 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, Printer, Phone, MapPin, Building2, Clock, RotateCcw, CheckCircle2, MessageSquare, Edit3 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
 import { WORK_STATUS } from '../constants/serviceTypes';
 import { smsService } from '../services/smsService';
 
 export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
+  useEffect(() => {
+    document.body.classList.add('modal-open');
+    const originalStyle = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   if (!record) return null;
 
   const handlePrint = () => {
@@ -153,7 +163,7 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
             <span className="btn-text-mobile">Print</span>
           </button> */}
 
-          <button 
+          {/* <button 
             className="btn btn-primary btn-sm"
             onClick={() => {
               onClose();
@@ -164,7 +174,7 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
             <Edit3 className="icon-sm" />
             <span className="btn-text-desktop">Edit Record</span>
             <span className="btn-text-mobile">Edit</span>
-          </button>
+          </button> */}
         </div>
       </div>
     </div>

@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Trash2, X, Loader2 } from 'lucide-react';
 
 export const DeleteConfirmModal = ({ record, onClose, onConfirm, isDeleting: externalIsDeleting = false }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const deleting = isDeleting || externalIsDeleting;
+
+  useEffect(() => {
+    document.body.classList.add('modal-open');
+    const originalStyle = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   if (!record) return null;
 
