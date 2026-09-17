@@ -144,7 +144,7 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
           <button className="btn btn-whatsapp btn-sm" onClick={handleSendWhatsApp} title="Send Ticket Message via WhatsApp">
             <MessageSquare className="icon-sm" />
             <span className="btn-text-desktop">Send WhatsApp / SMS</span>
-            <span className="btn-text-mobile">WhatsApp</span>
+            <span className="btn-text-mobile">WhatsApp/SMS</span>
           </button>
 
           <button className="btn btn-secondary btn-sm" onClick={handlePrint} title="Print Receipt">

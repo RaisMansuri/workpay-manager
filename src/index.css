@@ -2814,21 +2814,51 @@ body {
     padding: 1rem 1.15rem !important;
   }
 
+  .btn-text-desktop {
+    display: none !important;
+  }
+
+  .btn-text-mobile {
+    display: inline !important;
+  }
+
   .modal-footer {
-    padding: 0.85rem 1.15rem !important;
-    flex-direction: column !important;
-    gap: 0.55rem !important;
-    align-items: stretch !important;
+    padding: 0.75rem 0.85rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.45rem !important;
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
   }
 
   .modal-footer .btn {
-    width: 100% !important;
+    flex: 1 1 0% !important;
+    width: auto !important;
+    min-width: 0 !important;
     justify-content: center !important;
-    font-size: 0.88rem !important;
-    padding: 0.65rem 1rem !important;
-    min-height: 42px !important;
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 0.45rem !important;
+    min-height: 38px !important;
+    white-space: nowrap !important;
+    gap: 0.3rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .modal-footer .btn-whatsapp {
+    flex: 1.35 1 0% !important;
+    padding: 0.5rem 0.6rem !important;
+  }
+
+  .modal-footer .btn svg,
+  .modal-footer .btn .icon-sm,
+  .modal-footer .btn .icon-xs {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0 !important;
   }
 
   .ticket-badge-row {
