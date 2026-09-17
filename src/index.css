@@ -3005,3 +3005,107 @@ body {
   transform: scale(1.08) !important;
 }
 
+/* ==========================================================================
+   PRINT MEDIA STYLES (SINGLE PAGE TICKET RECEIPT PRINTING)
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide everything in body by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Make backdrop container visible as plain wrapper */
+  .modal-backdrop {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    visibility: visible !important;
+    z-index: 99999 !important;
+  }
+
+  /* Make ticket modal card and its text visible */
+  .modal-content.ticket-modal,
+  .modal-content.ticket-modal * {
+    visibility: visible !important;
+  }
+
+  .modal-content.ticket-modal {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 650px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border: 1.5px solid #334155 !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    max-height: none !important;
+    overflow: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Hide close button & action buttons in print output */
+  .modal-close-btn,
+  .modal-footer {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .modal-header {
+    border-bottom: 2px solid #2563eb !important;
+    padding: 1rem 1.25rem !important;
+  }
+
+  .printable-area {
+    padding: 1.25rem !important;
+  }
+
+  .ticket-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1.25rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .ticket-detail-item {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .modal-billing-summary {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 0.85rem 1rem !important;
+  }
+}
+

@@ -147,11 +147,11 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
             <span className="btn-text-mobile">WhatsApp/SMS</span>
           </button>
 
-          <button className="btn btn-secondary btn-sm" onClick={handlePrint} title="Print Receipt">
+          {/* <button className="btn btn-secondary btn-sm" onClick={handlePrint} title="Print Receipt">
             <Printer className="icon-sm" />
             <span className="btn-text-desktop">Print Receipt</span>
             <span className="btn-text-mobile">Print</span>
-          </button>
+          </button> */}
 
           <button 
             className="btn btn-primary btn-sm"
