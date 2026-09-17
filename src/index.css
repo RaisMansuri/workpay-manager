@@ -2752,12 +2752,22 @@ body {
   }
 
   .ledger-date-text {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
     font-size: 0.72rem !important;
     color: var(--neutral-400) !important;
     font-weight: 500 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+  }
+
+  .ledger-date-text svg {
+    width: 13px !important;
+    height: 13px !important;
+    flex-shrink: 0 !important;
+    color: var(--neutral-400) !important;
   }
 
   .mobile-actions-right {
