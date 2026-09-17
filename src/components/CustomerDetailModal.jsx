@@ -141,25 +141,29 @@ export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
 
         {/* Modal Footer Actions */}
         <div className="modal-footer">
-          <button className="btn btn-whatsapp" onClick={handleSendWhatsApp} title="Send Ticket Message via WhatsApp">
+          <button className="btn btn-whatsapp btn-sm" onClick={handleSendWhatsApp} title="Send Ticket Message via WhatsApp">
             <MessageSquare className="icon-sm" />
-            <span>Send WhatsApp / SMS</span>
+            <span className="btn-text-desktop">Send WhatsApp / SMS</span>
+            <span className="btn-text-mobile">WhatsApp</span>
           </button>
 
-          <button className="btn btn-secondary" onClick={handlePrint}>
+          <button className="btn btn-secondary btn-sm" onClick={handlePrint} title="Print Receipt">
             <Printer className="icon-sm" />
-            <span>Print Receipt</span>
+            <span className="btn-text-desktop">Print Receipt</span>
+            <span className="btn-text-mobile">Print</span>
           </button>
 
           <button 
-            className="btn btn-primary"
+            className="btn btn-primary btn-sm"
             onClick={() => {
               onClose();
               onEditRecord(record);
             }}
+            title="Edit Record"
           >
             <Edit3 className="icon-sm" />
-            <span>Edit Record</span>
+            <span className="btn-text-desktop">Edit Record</span>
+            <span className="btn-text-mobile">Edit</span>
           </button>
         </div>
       </div>
