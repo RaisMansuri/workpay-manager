@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Search, Filter, Edit3, Trash2, Eye, Clock, RotateCcw,
+  Search, Filter, Edit3, Trash2, Eye, Clock, RotateCcw, RotateCw,
   Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus, Info, X, Calendar, SlidersHorizontal
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
@@ -192,11 +192,11 @@ const FilterPopover = ({
         style={
           !coords.isMobile
             ? {
-                position: 'fixed',
-                top: `${coords.top}px`,
-                right: `${coords.right}px`,
-                zIndex: 10000
-              }
+              position: 'fixed',
+              top: `${coords.top}px`,
+              right: `${coords.right}px`,
+              zIndex: 10000
+            }
             : {}
         }
       >
@@ -324,6 +324,8 @@ export const CustomerTable = ({
   onDelete,
   onViewDetails,
   onOpenNewDrawer,
+  onRefresh,
+  isRefreshing,
   editingRecordId
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -573,21 +575,15 @@ export const CustomerTable = ({
           </div>
 
           <div className="desktop-top-actions">
-            {/* Temporarily commented out desktop Filters button as requested
             <button
-              ref={desktopFilterBtnRef}
               type="button"
-              className={`btn-mobile-filter-trigger ${activeFilterCount > 0 ? 'has-active-filters' : ''}`}
-              onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-              title="Open Advanced Filters"
+              className="btn-refresh"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              title=""
             >
-              <SlidersHorizontal className="icon-xs" />
-              <span>Filters</span>
-              {activeFilterCount > 0 && (
-                <span className="filter-active-badge">({activeFilterCount})</span>
-              )}
+              <RotateCw className={`icon-sm ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
-            */}
 
             <button
               className="btn-new-entry"
@@ -619,6 +615,16 @@ export const CustomerTable = ({
           </div>
 
           <div className="mobile-buttons-row">
+            <button
+              type="button"
+              className="btn-refresh"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              title=""
+            >
+              <RotateCw className={`icon-sm ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+
             <button
               ref={mobileFilterBtnRef}
               type="button"
@@ -903,13 +909,13 @@ export const CustomerTable = ({
                           <Eye className="icon-sm" />
                         </button>
 
-                        <button
+                        {/* <button
                           className="action-btn delete-btn"
                           title="Delete Record"
                           onClick={() => onDelete(record)}
                         >
                           <Trash2 className="icon-sm" />
-                        </button>
+                        </button> */}
                       </div>
                     </td>
                   </tr>
@@ -1042,13 +1048,13 @@ export const CustomerTable = ({
                       <Eye className="icon-sm" />
                     </button>
 
-                    <button
+                    {/* <button
                       className="action-btn delete-btn"
                       title="Delete Record"
                       onClick={() => onDelete(record)}
                     >
                       <Trash2 className="icon-sm" />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </div>
@@ -1121,7 +1127,7 @@ export const CustomerTable = ({
           >
             <ChevronsLeft className="icon-sm" />
           </button>
-          
+
           <button
             className="page-btn"
             disabled={validCurrentPage <= 1}

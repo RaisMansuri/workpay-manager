@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { RotateCw } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { SummaryCards } from './components/SummaryCards';
 import { CustomerForm } from './components/CustomerForm';
@@ -18,12 +19,26 @@ export function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Reload records asynchronously from Supabase PostgreSQL / Storage
   const reloadData = useCallback(async () => {
     const loaded = await customerStorage.getRecordsAsync();
     setRecords(loaded);
   }, []);
+
+  // Manual Refresh Handler
+  const handleRefreshData = async () => {
+    setIsRefreshing(true);
+    try {
+      await reloadData();
+      showToast('All values and records refreshed successfully!', 'success');
+    } catch (err) {
+      showToast('Failed to refresh data.', 'error');
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
 
   // Initial load + Real-Time Sync event listeners & Supabase Realtime Subscription
   useEffect(() => {
@@ -185,6 +200,8 @@ export function App() {
       <Navbar
         onExportCSV={handleExportCSV}
         onOpenNewDrawer={handleOpenNewDrawer}
+        onRefresh={handleRefreshData}
+        isRefreshing={isRefreshing}
       />
 
       <main className="main-container">
@@ -200,6 +217,8 @@ export function App() {
               onDelete={(record) => setDeletingRecord(record)}
               onViewDetails={(record) => setViewingRecord(record)}
               onOpenNewDrawer={handleOpenNewDrawer}
+              onRefresh={handleRefreshData}
+              isRefreshing={isRefreshing}
               editingRecordId={editingRecord?.id}
             />
           </section>
@@ -233,6 +252,16 @@ export function App() {
           onConfirm={handleConfirmDelete}
           isDeleting={isDeleting}
         />
+      )}
+
+      {/* Full-Screen Refresh Loader Overlay */}
+      {isRefreshing && (
+        <div className="fullscreen-loader-overlay">
+          <div className="loader-card">
+            <RotateCw className="brand-modal-icon animate-spin" />
+
+          </div>
+        </div>
       )}
 
       <Toast toast={toast} onClose={() => setToast(null)} />
