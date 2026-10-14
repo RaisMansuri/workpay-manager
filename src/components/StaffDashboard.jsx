@@ -8,7 +8,6 @@ import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { Toast } from './Toast';
 import { customerStorage } from '../services/customerStorage';
 import { smsService } from '../services/smsService';
-import { UserCheck } from 'lucide-react';
 
 export const StaffDashboard = ({ profile, onLogout }) => {
   const [records, setRecords] = useState([]);
@@ -99,13 +98,8 @@ export const StaffDashboard = ({ profile, onLogout }) => {
       setIsDrawerOpen(false);
 
       const savedRecord = result.record || record;
-      const smsRes = await smsService.sendCustomerSmsNotification(savedRecord);
-
-      if (smsRes.success) {
-        showToast(`Customer entry saved! SMS Sent Successfully`, 'success');
-      } else {
-        showToast(`Customer entry saved successfully!`, 'success');
-      }
+      await smsService.sendCustomerSmsNotification(savedRecord);
+      showToast('Save Successfully', 'success');
     } else {
       showToast(`Failed to save record: ${result.error}`, 'error');
     }
@@ -168,19 +162,6 @@ export const StaffDashboard = ({ profile, onLogout }) => {
       />
 
       <main className="main-container">
-        {/* Welcome Header */}
-        <div className="staff-welcome-banner">
-          <div className="welcome-text-group">
-            <h2 className="welcome-title">
-              <UserCheck className="icon-md text-primary" />
-              <span>Welcome, {profile?.full_name || 'Staff Member'}</span>
-            </h2>
-            <p className="welcome-subtitle">
-              Staff Portal • Register & track customer service requests
-            </p>
-          </div>
-        </div>
-
         {/* Dynamic Summary Cards for Logged-In Staff User */}
         <SummaryCards stats={stats} />
 

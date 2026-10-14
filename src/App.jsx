@@ -229,13 +229,8 @@ export function App() {
       setIsDrawerOpen(false);
 
       const savedRecord = result.record || record;
-      const smsRes = await smsService.sendCustomerSmsNotification(savedRecord);
-
-      if (smsRes.success) {
-        showToast(`Customer entry saved! SMS Sent Successfully`, 'success');
-      } else {
-        showToast(`Customer entry saved successfully!`, 'success');
-      }
+      await smsService.sendCustomerSmsNotification(savedRecord);
+      showToast('Save Successfully', 'success');
     } else {
       showToast(`Failed to save record: ${result.error}`, 'error');
     }

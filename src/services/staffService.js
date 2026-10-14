@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import { supabase, secondarySupabase, isSupabaseConfigured } from '../config/supabaseClient';
 
 let inFlightStaffListPromise = null;
@@ -145,9 +146,35 @@ export const staffService = {
         updated_at: nowISO
       };
 
-      const { error: profileError } = await supabase
+      let { error: profileError } = await supabase
         .from('profiles')
         .upsert(profileRecord, { onConflict: 'id' });
+
+      // If RLS blocked admin client and signup returned a session for the new staff member, try inserting with new user token
+      if (profileError && authData?.session?.access_token) {
+        try {
+          const userClient = createClient(
+            import.meta.env.VITE_SUPABASE_URL,
+            import.meta.env.VITE_SUPABASE_ANON_KEY,
+            {
+              auth: { persistSession: false },
+              global: {
+                headers: {
+                  Authorization: `Bearer ${authData.session.access_token}`
+                }
+              }
+            }
+          );
+          const { error: userClientErr } = await userClient
+            .from('profiles')
+            .upsert(profileRecord, { onConflict: 'id' });
+          if (!userClientErr) {
+            profileError = null;
+          }
+        } catch (fallbackErr) {
+          console.warn('Fallback userClient profile upsert error:', fallbackErr);
+        }
+      }
 
       if (profileError) {
         console.warn('Profiles table upsert notice:', profileError.message);

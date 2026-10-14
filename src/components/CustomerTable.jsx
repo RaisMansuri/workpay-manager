@@ -313,7 +313,8 @@ export const CustomerTable = ({
   userRole = 'admin',
   profile
 }) => {
-  const effectiveRole = profile?.role || userRole;
+  const effectiveRole = String(profile?.role || userRole || '').trim().toLowerCase();
+  const isAdmin = effectiveRole === 'admin';
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedService, setSelectedService] = useState('All');
@@ -327,8 +328,9 @@ export const CustomerTable = ({
   const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
   const staffDropdownRef = useRef(null);
 
-  // Fetch staff options from database & subscribe to Realtime updates
+  // Fetch staff options from database & subscribe to Realtime updates (Admin only)
   useEffect(() => {
+    if (!isAdmin) return;
     let isMounted = true;
     const fetchStaff = async () => {
       try {
@@ -352,10 +354,11 @@ export const CustomerTable = ({
       isMounted = false;
       if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [isAdmin]);
 
   // Extract all unique staff users dynamically from DB profiles AND customer records
   const uniqueStaffOptions = useMemo(() => {
+    if (!isAdmin) return [];
     const map = new Map();
 
     // 1. Add staff from database profiles
@@ -522,35 +525,7 @@ export const CustomerTable = ({
     setCurrentPage(1);
   }, [searchTerm, selectedStatus, selectedService, selectedRequirement, selectedDateOption, selectedStaff, fromDate, toDate, rowsPerPage]);
 
-  // Helper for generating Customer Initials Avatar
-  const getInitials = (name) => {
-    if (!name) return 'CK';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
-  };
 
-  // Helper for generating deterministic colorful avatar background
-  const getAvatarGradient = (name) => {
-    const gradients = [
-      'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-      'linear-gradient(135deg, #10b981, #047857)',
-      'linear-gradient(135deg, #6366f1, #4338ca)',
-      'linear-gradient(135deg, #f59e0b, #b45309)',
-      'linear-gradient(135deg, #ec4899, #be185d)',
-      'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-      'linear-gradient(135deg, #06b6d4, #0e7490)'
-    ];
-    let hash = 0;
-    const str = name || 'Customer';
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash) % gradients.length;
-    return gradients[index];
-  };
 
   // Helper for filtering records by Date Option
   const filterByDateOption = (recordDateStr, option, fDateStr, tDateStr) => {
@@ -632,9 +607,9 @@ export const CustomerTable = ({
     const matchesDate = filterByDateOption(record.createdAt, selectedDateOption, fromDate, toDate);
 
     const creator = String(record.createdBy || record.created_by || '').trim();
-    let matchesStaff = selectedStaff === 'All';
+    let matchesStaff = !isAdmin || selectedStaff === 'All';
 
-    if (!matchesStaff && creator) {
+    if (isAdmin && !matchesStaff && creator) {
       const creatorLower = creator.toLowerCase();
       const selectedLower = selectedStaff.toLowerCase();
 
@@ -668,7 +643,7 @@ export const CustomerTable = ({
     (selectedService !== 'All' ? 1 : 0) +
     (selectedRequirement !== 'All' ? 1 : 0) +
     (selectedDateOption !== 'All Time' ? 1 : 0) +
-    (selectedStaff !== 'All' ? 1 : 0);
+    (isAdmin && selectedStaff !== 'All' ? 1 : 0);
 
   const handleApplyMobileFilters = ({ status, service, requirement, dateOption, fromDate: fD, toDate: tD }) => {
     setSelectedStatus(status);
@@ -765,7 +740,7 @@ export const CustomerTable = ({
           </div>
 
           <div className="table-actions-group">
-            {onExportCSV && effectiveRole === 'admin' && (
+            {onExportCSV && isAdmin && (
               <button
                 type="button"
                 className="btn-export-table"
@@ -866,8 +841,8 @@ export const CustomerTable = ({
             </select>
           </div>
 
-          {/* Simple Staff Member Dropdown Filter (Excludes Admin) */}
-          {effectiveRole === 'admin' && (
+          {/* Simple Staff Member Dropdown Filter (Excludes Admin) - Admin Only */}
+          {isAdmin && (
             <div className="clean-filter-control">
               <Users className="filter-control-icon" />
               <select
@@ -927,26 +902,39 @@ export const CustomerTable = ({
 
       {/* Desktop Data Table View (> 768px) */}
       <div className="table-responsive desktop-table-view">
-        <table className="data-table">
+        <table className={`data-table ${!isAdmin ? 'staff-table' : ''}`}>
+          <colgroup>
+            <col style={{ width: isAdmin ? '16%' : '17%' }} />
+            <col style={{ width: isAdmin ? '9%' : '9.5%' }} />
+            <col style={{ width: isAdmin ? '7.5%' : '8%' }} />
+            <col style={{ width: isAdmin ? '12%' : '13%' }} />
+            <col style={{ width: isAdmin ? '7.5%' : '8%' }} />
+            <col style={{ width: isAdmin ? '6%' : '6.5%' }} />
+            <col style={{ width: isAdmin ? '6%' : '6.5%' }} />
+            <col style={{ width: isAdmin ? '9%' : '9.5%' }} />
+            <col style={{ width: isAdmin ? '14.5%' : '15.5%' }} />
+            {isAdmin && <col style={{ width: '6%' }} />}
+            <col style={{ width: isAdmin ? '6.5%' : '6.5%' }} />
+          </colgroup>
           <thead>
             <tr>
-              <th>Customer Name & Address</th>
-              <th>Mobile</th>
-              <th className="text-left">Requirement</th>
-              <th>Service Type</th>
-              <th>Work Status</th>
-              <th className="text-right">Total</th>
-              <th className="text-right">Paid</th>
-              <th className="text-right">Remaining Balance</th>
-              <th>Date & Time</th>
-              <th>Created By</th>
-              <th className="text-center">Actions</th>
+              <th className="th-customer">Customer Name & Address</th>
+              <th className="th-mobile">Mobile</th>
+              <th className="th-requirement text-left">Requirement</th>
+              <th className="th-service">Service Type</th>
+              <th className="th-status">Work Status</th>
+              <th className="th-total text-right">Total</th>
+              <th className="th-paid text-right">Paid</th>
+              <th className="th-balance text-right">Remaining Balance</th>
+              <th className="th-date">Date & Time</th>
+              {isAdmin && <th className="th-created-by">Created By</th>}
+              <th className="th-actions text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {paginatedRecords.length === 0 ? (
               <tr>
-                <td colSpan={11} className="empty-state">
+                <td colSpan={isAdmin ? 11 : 10} className="empty-state">
                   <div className="empty-state-content">
                     <Inbox className="empty-icon" />
                     <h4>No Customer Records Found</h4>
@@ -964,15 +952,9 @@ export const CustomerTable = ({
                     key={record.id}
                     className={`table-row ${isEditingThis ? 'editing-row' : ''}`}
                   >
-                    {/* Customer Name with Initials Avatar & Location Icon Tooltip */}
+                    {/* Customer Name & Location Icon Tooltip */}
                     <td className="cell-customer">
                       <div className="customer-cell-container">
-                        <div
-                          className="customer-avatar"
-                          style={{ background: getAvatarGradient(record.customerName) }}
-                        >
-                          {getInitials(record.customerName)}
-                        </div>
                         <div className="customer-name-wrapper">
                           <div className="customer-name-row">
                             <strong className="customer-name">{record.customerName}</strong>
@@ -1021,17 +1003,17 @@ export const CustomerTable = ({
                     <td className="cell-status">{getStatusBadge(record.status)}</td>
 
                     {/* Total Amount */}
-                    <td className="cell-amount text-right font-medium">
+                    <td className="cell-total cell-amount text-right font-medium">
                       {formatCurrency(record.totalAmount)}
                     </td>
 
                     {/* Paid Amount */}
-                    <td className="cell-amount text-right font-medium text-green">
+                    <td className="cell-paid cell-amount text-right font-medium text-green">
                       {formatCurrency(record.paidAmount)}
                     </td>
 
                     {/* Remaining Balance */}
-                    <td className="cell-amount text-right">
+                    <td className="cell-balance cell-amount text-right">
                       {hasBalance ? (
                         <span className="remaining-balance-pill">
                           {formatCurrency(record.remainingBalance)} Due
@@ -1045,19 +1027,21 @@ export const CustomerTable = ({
 
                     {/* Date & Time */}
                     <td className="cell-date">
-                      <div className="date-time-stacked">
-                        <span className="font-semibold text-dark block">{formatDateOnly(record.createdAt)}</span>
-                        <span className="text-xs text-muted block">{formatTimeOnly(record.createdAt)}</span>
+                      <div className="date-time-inline">
+                        <span className="date-text">{formatDateOnly(record.createdAt)}</span>
+                        <span className="time-text">{formatTimeOnly(record.createdAt)}</span>
                       </div>
                     </td>
 
-                    {/* Created By Staff Member */}
-                    <td className="cell-created-by">
-                      <span className="badge badge-staff-user">
-                        <User className="icon-xs mr-1" />
-                        {getStaffName(record.createdBy || record.created_by)}
-                      </span>
-                    </td>
+                    {/* Created By Staff Member (Admin Only) */}
+                    {isAdmin && (
+                      <td className="cell-created-by">
+                        <span className="badge badge-staff-user">
+                          <User className="icon-xs mr-1" />
+                          {getStaffName(record.createdBy || record.created_by)}
+                        </span>
+                      </td>
+                    )}
 
                     {/* Action buttons */}
                     <td className="cell-actions text-center">
@@ -1078,7 +1062,7 @@ export const CustomerTable = ({
                           <Eye className="icon-sm" />
                         </button>
 
-                        {effectiveRole !== 'staff' && onDelete && (
+                        {isAdmin && onDelete && (
                           <button
                             className="action-btn delete-btn"
                             title="Delete Record"
@@ -1117,15 +1101,9 @@ export const CustomerTable = ({
                 key={record.id}
                 className={`mobile-ledger-card ${isEditingThis ? 'editing-card' : ''}`}
               >
-                {/* 1. Header: Avatar | Name + Location Icon | Status Badge */}
+                {/* 1. Header: Name + Location Icon | Status Badge */}
                 <div className="ledger-card-header">
                   <div className="ledger-customer-info">
-                    <div
-                      className="customer-avatar"
-                      style={{ background: getAvatarGradient(record.customerName) }}
-                    >
-                      {getInitials(record.customerName)}
-                    </div>
                     <div className="ledger-customer-details">
                       <div className="customer-name-row">
                         <h4 className="ledger-customer-name">{record.customerName}</h4>
@@ -1215,7 +1193,7 @@ export const CustomerTable = ({
                       <Eye className="icon-sm" />
                     </button>
 
-                    {effectiveRole !== 'staff' && onDelete && (
+                    {isAdmin && onDelete && (
                       <button
                         className="action-btn delete-btn"
                         title="Delete Record"
