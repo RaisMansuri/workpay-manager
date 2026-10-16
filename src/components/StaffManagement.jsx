@@ -1,21 +1,63 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Users, UserPlus, Search, Shield, CheckCircle2, XCircle, 
-  Eye, Edit3, Loader2, RefreshCw, MoreVertical, KeyRound, 
+  Edit3, Loader2, RefreshCw, MoreVertical, KeyRound, 
   AlertTriangle, X, Clock, Filter, Calendar, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight
 } from 'lucide-react';
 import { staffService } from '../services/staffService';
+import { subscriptionService } from '../services/subscriptionService';
 import { CreateStaffModal } from './CreateStaffModal';
 import { StaffDetailModal } from './StaffDetailModal';
 import { ResetPasswordModal } from './ResetPasswordModal';
 import { Toast } from './Toast';
 import { formatDateTime } from '../utils/formatters';
 
-export const StaffManagement = ({ profile }) => {
+export const StaffManagement = ({ profile, activeSubscription: propSubscription, onOpenSubscription }) => {
   const [staffList, setStaffList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  
+  // Subscription state for seat limit validation
+  const [activeSubscription, setActiveSubscription] = useState(() => {
+    if (propSubscription) return propSubscription;
+    try {
+      const cached = localStorage.getItem('workpay_active_subscription');
+      if (cached) return JSON.parse(cached);
+    } catch (e) {
+      /* ignore */
+    }
+    return null;
+  });
+
+  // Sync prop changes
+  useEffect(() => {
+    if (propSubscription) {
+      setActiveSubscription(propSubscription);
+    }
+  }, [propSubscription]);
+
+  // Load and listen to subscription changes in real time
+  useEffect(() => {
+    let isMounted = true;
+    subscriptionService.getActiveSubscriptionAsync(profile?.id).then((sub) => {
+      if (isMounted && sub) {
+        setActiveSubscription(sub);
+      }
+    });
+
+    const handleSubChange = (e) => {
+      if (isMounted && e?.detail) {
+        setActiveSubscription(e.detail);
+      }
+    };
+
+    window.addEventListener('workpay_subscription_updated', handleSubChange);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('workpay_subscription_updated', handleSubChange);
+    };
+  }, [profile]);
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,7 +91,11 @@ export const StaffManagement = ({ profile }) => {
   const loadStaffList = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await staffService.getStaffListAsync();
+      const minDelay = new Promise((resolve) => setTimeout(resolve, 800));
+      const [data] = await Promise.all([
+        staffService.getStaffListAsync(),
+        minDelay
+      ]);
       setStaffList(data);
     } catch (err) {
       console.error('Failed to load staff list:', err);
@@ -182,8 +228,22 @@ export const StaffManagement = ({ profile }) => {
     return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
   };
 
-  const activeCount = staffList.filter(s => s.status === 'active').length;
-  const inactiveCount = staffList.filter(s => s.status === 'inactive').length;
+  // Filter out any admin accounts from staff seats count
+  const staffMembers = staffList.filter(s => s.role !== 'admin');
+  const staffMembersCount = staffMembers.length;
+  const maxStaffLimit = Number(activeSubscription?.maxStaffLimit) || 10;
+  const canAddStaff = staffMembersCount < maxStaffLimit;
+
+  const activeCount = staffMembers.filter(s => s.status === 'active').length;
+  const inactiveCount = staffMembers.filter(s => s.status === 'inactive').length;
+
+  const handleOpenCreateStaffModal = () => {
+    if (!canAddStaff) {
+      showToast(`Staff limit reached (${staffMembersCount}/${maxStaffLimit}) for ${activeSubscription?.planName || 'Plan'}. Please upgrade your subscription plan to add more staff.`, 'warning');
+      return;
+    }
+    setIsCreateModalOpen(true);
+  };
 
   return (
     <div className="staff-management-container animate-fade-in">
@@ -205,7 +265,12 @@ export const StaffManagement = ({ profile }) => {
           </div>
           <div className="kpi-content">
             <span className="kpi-label">Total Staff Members</span>
-            <h3 className="kpi-value">{staffList.length}</h3>
+            <h3 className="kpi-value">
+              {staffMembersCount}
+              <span className="kpi-seats-caption">
+                /{maxStaffLimit >= 999 ? '∞' : maxStaffLimit} seats
+              </span>
+            </h3>
           </div>
         </div>
 
@@ -262,7 +327,7 @@ export const StaffManagement = ({ profile }) => {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   aria-label="Filter by account status"
                 >
-                  <option value="all">All Statuses ({staffList.length})</option>
+                  <option value="all">All Statuses ({staffMembersCount})</option>
                   <option value="active">Active Only ({activeCount})</option>
                   <option value="inactive">Inactive Only ({inactiveCount})</option>
                 </select>
@@ -270,14 +335,29 @@ export const StaffManagement = ({ profile }) => {
             </div>
 
             <div className="table-actions-group create-refresh-inline-row">
-              <button
-                type="button"
-                className="btn btn-primary btn-create-staff"
-                onClick={() => setIsCreateModalOpen(true)}
-              >
-                <UserPlus className="icon-sm mr-2" />
-                <span>Create New Staff</span>
-              </button>
+              {canAddStaff ? (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-create-staff"
+                  onClick={handleOpenCreateStaffModal}
+                >
+                  <UserPlus className="icon-sm mr-2" />
+                  <span>Create New Staff</span>
+                </button>
+              ) : (
+                <div 
+                  className="staff-limit-badge"
+                  title={`Staff seat limit reached (${staffMembersCount}/${maxStaffLimit}) for ${activeSubscription?.planName || 'Plan'}. Upgrade subscription plan to add more staff.`}
+                  onClick={onOpenSubscription}
+                  role={onOpenSubscription ? 'button' : undefined}
+                >
+                  <Shield className="icon-xs mr-1 text-amber" />
+                  <span>Limit Reached ({staffMembersCount}/{maxStaffLimit})</span>
+                  {onOpenSubscription && (
+                    <span className="staff-limit-upgrade-link">Upgrade</span>
+                  )}
+                </div>
+              )}
 
               <button
                 type="button"
@@ -385,17 +465,7 @@ export const StaffManagement = ({ profile }) => {
 
                       <td className="text-center">
                         <div className="action-buttons-group justify-center">
-                          {/* 1. View Icon Button */}
-                          <button
-                            type="button"
-                            className="btn-action-icon"
-                            onClick={() => setViewingStaff(staff)}
-                            title="View Staff Details"
-                          >
-                            <Eye className="icon-sm" />
-                          </button>
-
-                          {/* 2. Edit Profile Icon Button */}
+                          {/* 1. Edit Profile Icon Button */}
                           <button
                             type="button"
                             className="btn-action-icon"
@@ -497,16 +567,6 @@ export const StaffManagement = ({ profile }) => {
 
                   <div className="mobile-card-footer">
                     <div className="mobile-card-actions">
-                      <button
-                        type="button"
-                        className="mobile-action-btn btn-view"
-                        onClick={() => setViewingStaff(staff)}
-                        title="View Staff Details"
-                        aria-label="View Staff Details"
-                      >
-                        <Eye className="icon-sm" />
-                      </button>
-
                       <button
                         type="button"
                         className="mobile-action-btn btn-edit"
@@ -668,6 +728,7 @@ export const StaffManagement = ({ profile }) => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onStaffCreated={handleCreateStaff}
+        currentStaffCount={staffMembersCount}
       />
 
       {/* Staff Details / Edit Profile Modal */}
@@ -686,6 +747,21 @@ export const StaffManagement = ({ profile }) => {
         onClose={() => setResetPasswordStaff(null)}
         onSuccess={(msg) => showToast(msg, 'success')}
       />
+
+      {/* Screen Mute Mode Loading Overlay when refreshing */}
+      {isLoading && (
+        <div className="screen-mute-refresh-overlay animate-fade-in" aria-live="polite">
+          <div className="screen-mute-loader-card animate-scale-up">
+            <div className="screen-mute-icon-glow">
+              <RefreshCw className="icon-md spinner-icon text-primary" />
+            </div>
+            <div className="screen-mute-info">
+              <h4 className="screen-mute-title">Refreshing Staff Records...</h4>
+              <p className="screen-mute-subtitle">Syncing live staff members from database</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>

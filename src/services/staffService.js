@@ -134,8 +134,10 @@ export const staffService = {
         };
       }
 
-      // Step 4: Only if Auth user creation is successful, create/update user's record in public.profiles
-      const profileRecord = {
+      // Step 4: Create or update staff record in public.profiles.
+      // The Admin UUID is derived on the server from the verified session (auth.uid()).
+      // We never trust a created_by value supplied by the client.
+      let profileRecord = {
         id: createdUser.id,
         full_name: fullName,
         email: cleanEmail,
@@ -146,56 +148,70 @@ export const staffService = {
         updated_at: nowISO
       };
 
-      let { error: profileError } = await supabase
-        .from('profiles')
-        .upsert(profileRecord, { onConflict: 'id' });
+      let profileError = null;
 
-      // If RLS blocked admin client and signup returned a session for the new staff member, try inserting with new user token
-      if (profileError && authData?.session?.access_token) {
-        try {
-          const userClient = createClient(
-            import.meta.env.VITE_SUPABASE_URL,
-            import.meta.env.VITE_SUPABASE_ANON_KEY,
-            {
-              auth: { persistSession: false },
-              global: {
-                headers: {
-                  Authorization: `Bearer ${authData.session.access_token}`
-                }
-              }
-            }
-          );
-          const { error: userClientErr } = await userClient
-            .from('profiles')
-            .upsert(profileRecord, { onConflict: 'id' });
-          if (!userClientErr) {
-            profileError = null;
-          }
-        } catch (fallbackErr) {
-          console.warn('Fallback userClient profile upsert error:', fallbackErr);
+      // 1. Primary Method: Call server RPC which derives Admin UUID directly from auth.uid()
+      const { data: rpcProfile, error: rpcErr } = await supabase.rpc('create_staff_profile', {
+        p_id: createdUser.id,
+        p_full_name: fullName,
+        p_email: cleanEmail,
+        p_mobile: mobile || '',
+        p_role: role,
+        p_status: status
+      });
+
+      if (!rpcErr && rpcProfile) {
+        profileRecord = rpcProfile;
+      } else {
+        if (rpcErr) {
+          console.warn('create_staff_profile RPC notice (falling back to trigger-secured upsert):', rpcErr.message);
+        }
+
+        // 2. Fallback: Authenticated admin client upsert. The server trigger trg_set_profile_created_by
+        // automatically intercepts this upsert on the server and assigns created_by = auth.uid().
+        const { error: upsertErr } = await supabase
+          .from('profiles')
+          .upsert(profileRecord, { onConflict: 'id' });
+
+        if (upsertErr) {
+          profileError = upsertErr;
         }
       }
 
       if (profileError) {
-        console.warn('Profiles table upsert notice:', profileError.message);
+        console.error('Profiles table insertion failed after Auth signup:', profileError.message);
 
-        // Check if profile record was already created in profiles table by Supabase Auth Trigger
-        const freshList = await this.getStaffListAsync();
-        const existingStaff = freshList.find(
-          (s) => s.id === createdUser.id || (s.email && s.email.toLowerCase() === cleanEmail)
-        );
+        // Safe partial failure handling (Task 6):
+        // Attempt to rollback the orphaned auth user so the email isn't permanently trapped in auth.users
+        let cleanedUp = false;
+        try {
+          const { data: cleanRes, error: cleanErr } = await supabase.rpc('cleanup_failed_staff_signup', {
+            p_user_id: createdUser.id
+          });
+          if (!cleanErr && cleanRes) {
+            cleanedUp = true;
+          }
+        } catch (cleanupEx) {
+          console.warn('Orphaned auth user cleanup notice:', cleanupEx);
+        }
 
-        if (existingStaff) {
-          return { success: true, staff: existingStaff, staffList: freshList };
+        if (cleanedUp) {
+          return {
+            success: false,
+            error: `Failed to create staff profile: ${profileError.message || 'Database error'}. The pending login account was safely rolled back. Please ensure 'supabase_staff_created_by_migration.sql' is executed in your Supabase SQL Editor and try again.`
+          };
         }
 
         if (profileError.message?.includes('row-level security') || profileError.code === '42501') {
           return {
             success: false,
-            error: "Database RLS Error: Row-level security is enabled on 'profiles' table in Supabase. Please run SQL in Supabase Editor: ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;"
+            error: "Database RLS Error: Row-level security prevented staff creation. Please execute the 'supabase_staff_created_by_migration.sql' script in your Supabase SQL Editor."
           };
         }
-        return { success: false, error: profileError.message };
+        return { 
+          success: false, 
+          error: `Staff account was created in Auth, but profile setup failed: ${profileError.message}. Please run 'supabase_staff_created_by_migration.sql' in your Supabase SQL Editor.` 
+        };
       }
 
       // Step 5: Refresh live staff list from database

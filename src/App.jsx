@@ -9,9 +9,14 @@ import { Toast } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
 import { StaffDashboard } from './components/StaffDashboard';
 import { StaffManagement } from './components/StaffManagement';
+import { ProfileModal } from './components/ProfileModal';
+import { SubscriptionModal } from './components/SubscriptionModal';
+import { AccountSettingsModal } from './components/AccountSettingsModal';
 import { customerStorage } from './services/customerStorage';
 import { smsService } from './services/smsService';
 import { authService } from './services/authService';
+import { subscriptionService } from './services/subscriptionService';
+import { staffService } from './services/staffService';
 import { Building2, Loader2 } from 'lucide-react';
 
 export function App() {
@@ -23,6 +28,19 @@ export function App() {
 
   // Simple path routing state
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const [adminTab, setAdminTab] = useState(() => {
+    const path = window.location.pathname;
+    return (path === '/staff' || path === '/staff-management' || path.startsWith('/admin/staff')) ? 'staff' : 'dashboard';
+  });
+
+  // Keep adminTab in sync with route navigation
+  useEffect(() => {
+    if (currentPath === '/staff' || currentPath === '/staff-management' || currentPath.startsWith('/admin/staff')) {
+      setAdminTab('staff');
+    } else if (currentPath === '/dashboard' || currentPath === '/' || currentPath.startsWith('/admin/dashboard')) {
+      setAdminTab('dashboard');
+    }
+  }, [currentPath]);
 
   // Application Data State
   const [records, setRecords] = useState([]);
@@ -31,6 +49,11 @@ export function App() {
   const [deletingRecord, setDeletingRecord] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // Profile Dropdown & Modal State ('profile' | 'subscription' | 'settings' | null)
+  const [activeModal, setActiveModal] = useState(null);
+  const [activeSubscription, setActiveSubscription] = useState(null);
+  const [staffCount, setStaffCount] = useState(0);
 
   // Navigation helper
   const navigate = useCallback((path) => {
@@ -65,6 +88,8 @@ export function App() {
             if (path === '/' || path === '/login' || path.startsWith('/admin')) {
               const target = (path === '/staff' || path === '/admin/staff') ? '/staff' : '/dashboard';
               navigate(target);
+            } else if (['/profile', '/subscription', '/settings'].includes(path)) {
+              setActiveModal(path.substring(1));
             }
           } else {
             setSession(null);
@@ -165,6 +190,38 @@ export function App() {
       window.removeEventListener(customerStorage.DB_CHANGE_EVENT, checkDemoDeactivation);
     };
   }, [session, profile, navigate]);
+
+  // Load active subscription and staff seats usage
+  useEffect(() => {
+    if (!profile) return;
+    subscriptionService.getActiveSubscriptionAsync(profile.id).then((sub) => {
+      setActiveSubscription(sub);
+    });
+
+    staffService.getStaffListAsync().then((list) => {
+      setStaffCount(list ? list.filter(s => s.role !== 'admin').length : 0);
+    });
+
+    const unsubscribeStaff = staffService.subscribeToRealtime((list) => {
+      setStaffCount(list ? list.filter(s => s.role !== 'admin').length : 0);
+    });
+
+    const handleSubChange = (e) => {
+      if (e?.detail) setActiveSubscription(e.detail);
+    };
+    window.addEventListener('workpay_subscription_updated', handleSubChange);
+    return () => {
+      unsubscribeStaff();
+      window.removeEventListener('workpay_subscription_updated', handleSubChange);
+    };
+  }, [profile]);
+
+  // Handle direct URL modal routes
+  useEffect(() => {
+    if (['/profile', '/subscription', '/settings'].includes(currentPath)) {
+      setActiveModal(currentPath.substring(1));
+    }
+  }, [currentPath]);
 
   // Reload records from Supabase
   const reloadData = useCallback(async () => {
@@ -338,6 +395,15 @@ export function App() {
         <StaffDashboard
           profile={profile}
           onLogout={handleLogout}
+          activeSubscription={activeSubscription}
+          onProfileUpdated={(updated) => {
+            setProfile(updated);
+            showToast('Profile updated successfully!', 'success');
+          }}
+          onSubscriptionUpdated={(updated) => {
+            setActiveSubscription(updated);
+            showToast(`Subscription updated to ${updated.planName}!`, 'success');
+          }}
         />
         {isLoggingOut && (
           <div className="logout-loading-overlay animate-fade-in">
@@ -358,23 +424,41 @@ export function App() {
   }
 
   // 4. Admin Role Access: Render full Admin Dashboard or Staff Management
-  const isStaffManagement = currentPath === '/staff' || currentPath === '/staff-management';
+  const isStaffManagement = adminTab === 'staff' || currentPath === '/staff' || currentPath === '/staff-management';
+
+  const handleCloseActiveModal = () => {
+    setActiveModal(null);
+    if (['/profile', '/subscription', '/settings'].includes(currentPath)) {
+      navigate(adminTab === 'staff' ? '/staff' : '/dashboard');
+    }
+  };
 
   return (
     <div className="app-layout">
-      {/* Top Navbar Header with Admin Profile, Navigation & Logout */}
+      {/* Top Navbar Header with Admin Profile Dropdown, Navigation & Logout */}
       <Navbar 
         profile={profile}
         onLogout={handleLogout}
         onExportCSV={handleExportCSV}
         onOpenNewDrawer={handleOpenNewDrawer}
-        activeTab={isStaffManagement ? 'staff' : 'dashboard'}
-        onTabChange={(tab) => navigate(tab === 'staff' ? '/staff' : '/dashboard')}
+        activeTab={adminTab}
+        onTabChange={(tab) => {
+          setAdminTab(tab);
+          navigate(tab === 'staff' ? '/staff' : '/dashboard');
+        }}
+        onOpenProfile={() => { setActiveModal('profile'); navigate('/profile'); }}
+        onOpenSubscription={() => { setActiveModal('subscription'); navigate('/subscription'); }}
+        onOpenSettings={() => { setActiveModal('settings'); navigate('/settings'); }}
+        activeSubscription={activeSubscription}
       />
 
       <main className="main-container">
         {isStaffManagement ? (
-          <StaffManagement profile={profile} />
+          <StaffManagement 
+            profile={profile} 
+            activeSubscription={activeSubscription}
+            onOpenSubscription={() => { setActiveModal('subscription'); navigate('/subscription'); }}
+          />
         ) : (
           <>
             {/* Dashboard Summary KPI Cards */}
@@ -392,6 +476,7 @@ export function App() {
                   onViewDetails={(record) => setViewingRecord(record)}
                   onOpenNewDrawer={handleOpenNewDrawer}
                   onExportCSV={handleExportCSV}
+                  onRefresh={reloadData}
                   editingRecordId={editingRecord?.id}
                 />
               </section>
@@ -426,6 +511,44 @@ export function App() {
           onConfirm={handleConfirmDelete}
         />
       )}
+
+      {/* 1. My Profile Modal */}
+      <ProfileModal
+        isOpen={activeModal === 'profile'}
+        profile={profile}
+        activeSubscription={activeSubscription}
+        onClose={handleCloseActiveModal}
+        onProfileUpdated={(updated) => {
+          setProfile(updated);
+          showToast('Profile updated successfully!', 'success');
+        }}
+      />
+
+      {/* 2. Subscription Plan Modal */}
+      <SubscriptionModal
+        isOpen={activeModal === 'subscription'}
+        activeSubscription={activeSubscription}
+        staffCount={staffCount}
+        onClose={handleCloseActiveModal}
+        onSubscriptionUpdated={(updated) => {
+          setActiveSubscription(updated);
+          showToast(`Subscription updated to ${updated.planName}!`, 'success');
+        }}
+      />
+
+      {/* 3. Account Settings Modal */}
+      <AccountSettingsModal
+        isOpen={activeModal === 'settings'}
+        profile={profile}
+        onClose={handleCloseActiveModal}
+        onPreferencesUpdated={(updated) => {
+          setProfile(updated);
+          showToast('Account preferences saved!', 'success');
+        }}
+        onPasswordUpdated={() => {
+          showToast('Password updated successfully!', 'success');
+        }}
+      />
 
       <Toast toast={toast} onClose={() => setToast(null)} />
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Search, Filter, Edit3, Trash2, Eye, Clock, RotateCcw, Download,
-  Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus, Info, X, Calendar, SlidersHorizontal, Users, User, ChevronDown, Check
+  Phone, MapPin, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, UserPlus, Info, X, Calendar, SlidersHorizontal, Users, User, ChevronDown, Check, RefreshCw
 } from 'lucide-react';
 import { formatCurrency, formatDateTime, formatDateOnly, formatTimeOnly } from '../utils/formatters';
 import { WORK_STATUS, SEVA_SERVICES, CUSTOMER_REQUIREMENTS } from '../constants/serviceTypes';
@@ -305,16 +305,18 @@ const FilterPopover = ({
 export const CustomerTable = ({
   records,
   onEdit,
-  onDelete,
+  // onDelete,
   onViewDetails,
   onOpenNewDrawer,
   onExportCSV,
+  onRefresh,
   editingRecordId,
   userRole = 'admin',
   profile
 }) => {
   const effectiveRole = String(profile?.role || userRole || '').trim().toLowerCase();
   const isAdmin = effectiveRole === 'admin';
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedService, setSelectedService] = useState('All');
@@ -327,6 +329,20 @@ export const CustomerTable = ({
 
   const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
   const staffDropdownRef = useRef(null);
+
+  const handleRefreshClick = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      const minDelay = new Promise((resolve) => setTimeout(resolve, 800));
+      const refreshPromise = onRefresh ? onRefresh() : Promise.resolve();
+      await Promise.all([refreshPromise, minDelay]);
+    } catch (e) {
+      console.warn('Refresh customer records notice:', e);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Fetch staff options from database & subscribe to Realtime updates (Admin only)
   useEffect(() => {
@@ -718,7 +734,7 @@ export const CustomerTable = ({
   const activeAnchorRef = window.innerWidth <= 768 ? mobileFilterBtnRef : desktopFilterBtnRef;
 
   return (
-    <div className="card table-card">
+    <div className={`card table-card ${isRefreshing ? 'table-card-muted' : ''}`}>
       {/* Table Top Controls Bar */}
       <div className="table-header-controls">
         {/* ROW 1: Search Left | New Entry Right */}
@@ -740,7 +756,8 @@ export const CustomerTable = ({
           </div>
 
           <div className="table-actions-group">
-            {onExportCSV && isAdmin && (
+            {/* Export CSV button - temporarily commented out as requested */}
+            {/* {onExportCSV && isAdmin && (
               <button
                 type="button"
                 className="btn-export-table"
@@ -750,7 +767,18 @@ export const CustomerTable = ({
                 <Download className="icon-sm text-secondary" />
                 <span>Export CSV</span>
               </button>
-            )}
+            )} */}
+
+            <button
+              type="button"
+              className="btn-toolbar-refresh"
+              onClick={handleRefreshClick}
+              disabled={isRefreshing}
+              title="Refresh customer records"
+              aria-label="Refresh customer records"
+            >
+              <RefreshCw className={`icon-sm ${isRefreshing ? 'spinner-icon' : ''}`} />
+            </button>
 
             <button
               className="btn-new-entry"
@@ -1062,7 +1090,7 @@ export const CustomerTable = ({
                           <Eye className="icon-sm" />
                         </button>
 
-                        {isAdmin && onDelete && (
+                        {/* {isAdmin && onDelete && (
                           <button
                             className="action-btn delete-btn"
                             title="Delete Record"
@@ -1070,7 +1098,7 @@ export const CustomerTable = ({
                           >
                             <Trash2 className="icon-sm" />
                           </button>
-                        )}
+                        )} */}
                       </div>
                     </td>
                   </tr>
@@ -1193,7 +1221,7 @@ export const CustomerTable = ({
                       <Eye className="icon-sm" />
                     </button>
 
-                    {isAdmin && onDelete && (
+                    {/* {isAdmin && onDelete && (
                       <button
                         className="action-btn delete-btn"
                         title="Delete Record"
@@ -1201,7 +1229,7 @@ export const CustomerTable = ({
                       >
                         <Trash2 className="icon-sm" />
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </div>
@@ -1318,6 +1346,21 @@ export const CustomerTable = ({
           </div>
         </div>
       </div>
+
+      {/* Screen Mute Mode Loading Overlay when refreshing */}
+      {isRefreshing && (
+        <div className="screen-mute-refresh-overlay animate-fade-in" aria-live="polite">
+          <div className="screen-mute-loader-card animate-scale-up">
+            <div className="screen-mute-icon-glow">
+              <RefreshCw className="icon-md spinner-icon text-primary" />
+            </div>
+            <div className="screen-mute-info">
+              <h4 className="screen-mute-title">Refreshing Records...</h4>
+              <p className="screen-mute-subtitle">Syncing live customer entries from database</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

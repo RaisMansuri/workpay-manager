@@ -5,17 +5,31 @@ import { CustomerForm } from './CustomerForm';
 import { CustomerTable } from './CustomerTable';
 import { CustomerDetailModal } from './CustomerDetailModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { ProfileModal } from './ProfileModal';
+import { SubscriptionModal } from './SubscriptionModal';
+import { AccountSettingsModal } from './AccountSettingsModal';
 import { Toast } from './Toast';
 import { customerStorage } from '../services/customerStorage';
 import { smsService } from '../services/smsService';
+import { subscriptionService } from '../services/subscriptionService';
 
-export const StaffDashboard = ({ profile, onLogout }) => {
+export const StaffDashboard = ({ profile, onLogout, activeSubscription, onProfileUpdated, onSubscriptionUpdated }) => {
   const [records, setRecords] = useState([]);
   const [editingRecord, setEditingRecord] = useState(null);
   const [viewingRecord, setViewingRecord] = useState(null);
   const [deletingRecord, setDeletingRecord] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [toast, setToast] = useState(null);
+  const [activeModal, setActiveModal] = useState(null); // 'profile' | 'subscription' | 'settings' | null
+  const [localSub, setLocalSub] = useState(activeSubscription || null);
+
+  useEffect(() => {
+    if (activeSubscription) {
+      setLocalSub(activeSubscription);
+    } else if (profile?.id) {
+      subscriptionService.getActiveSubscriptionAsync(profile.id).then(setLocalSub);
+    }
+  }, [activeSubscription, profile]);
 
   // Reload records asynchronously from Supabase PostgreSQL
   const reloadData = useCallback(async () => {
@@ -106,7 +120,6 @@ export const StaffDashboard = ({ profile, onLogout }) => {
   };
 
   const handleConfirmDelete = async (id) => {
-    const targetRecord = records.find(r => r.id === id);
     const result = await customerStorage.deleteRecordAsync(id);
     if (result.success) {
       setRecords(result.records);
@@ -115,12 +128,7 @@ export const StaffDashboard = ({ profile, onLogout }) => {
         setEditingRecord(null);
         setIsDrawerOpen(false);
       }
-      showToast(
-        targetRecord 
-          ? `Customer record for ${targetRecord.customerName} deleted.`
-          : 'Customer record deleted.', 
-        'info'
-      );
+      showToast('Record deleted.', 'info');
     } else {
       showToast(`Failed to delete record: ${result.error}`, 'error');
     }
@@ -131,17 +139,22 @@ export const StaffDashboard = ({ profile, onLogout }) => {
       showToast('No records available to export.', 'info');
       return;
     }
-    const headers = ['Customer Name', 'Mobile Number', 'Address', 'Service Type', 'Work Status', 'Total Amount', 'Paid Amount', 'Remaining Balance'];
+
+    const headers = ['Customer Name', 'Mobile Number', 'Address', 'Service Type', 'Work Description', 'Work Status', 'Total Amount', 'Paid Amount', 'Remaining Balance', 'Created Date'];
+    
     const rows = staffRecords.map(r => [
-      `"${r.customerName || ''}"`,
+      `"${(r.customerName || '').replace(/"/g, '""')}"`,
       `"${r.mobileNumber}"`,
-      `"${r.address || ''}"`,
-      `"${r.serviceType || ''}"`,
+      `"${(r.address || '').replace(/"/g, '""')}"`,
+      `"${(r.serviceType || '').replace(/"/g, '""')}"`,
+      `"${(r.workDescription || '').replace(/"/g, '""')}"`,
       `"${r.status}"`,
       r.totalAmount,
       r.paidAmount,
-      r.remainingBalance
+      r.remainingBalance,
+      `"${r.createdAt}"`
     ]);
+
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
     const link = document.createElement('a');
     link.setAttribute('href', encodeURI(csvContent));
@@ -153,12 +166,16 @@ export const StaffDashboard = ({ profile, onLogout }) => {
 
   return (
     <div className="app-layout">
-      {/* Top Navbar with Profile & Logout */}
+      {/* Top Navbar with Profile Dropdown & Logout */}
       <Navbar
         profile={profile}
         onLogout={onLogout}
         onExportCSV={handleExportCSV}
         onOpenNewDrawer={handleOpenNewDrawer}
+        onOpenProfile={() => setActiveModal('profile')}
+        onOpenSubscription={() => setActiveModal('subscription')}
+        onOpenSettings={() => setActiveModal('settings')}
+        activeSubscription={localSub}
       />
 
       <main className="main-container">
@@ -173,8 +190,11 @@ export const StaffDashboard = ({ profile, onLogout }) => {
               profile={profile}
               userRole="staff"
               onEdit={(r) => { setEditingRecord(r); setIsDrawerOpen(true); }}
+              onDelete={(record) => setDeletingRecord(record)}
               onViewDetails={(r) => setViewingRecord(r)}
               onOpenNewDrawer={handleOpenNewDrawer}
+              onExportCSV={handleExportCSV}
+              onRefresh={reloadData}
               editingRecordId={editingRecord?.id}
             />
           </section>
@@ -208,6 +228,45 @@ export const StaffDashboard = ({ profile, onLogout }) => {
           onConfirm={handleConfirmDelete}
         />
       )}
+
+      {/* Profile Modal */}
+      <ProfileModal
+        isOpen={activeModal === 'profile'}
+        profile={profile}
+        activeSubscription={localSub}
+        onClose={() => setActiveModal(null)}
+        onProfileUpdated={(updated) => {
+          if (onProfileUpdated) onProfileUpdated(updated);
+          showToast('Profile updated successfully!', 'success');
+        }}
+      />
+
+      {/* Subscription Modal */}
+      <SubscriptionModal
+        isOpen={activeModal === 'subscription'}
+        activeSubscription={localSub}
+        staffCount={1}
+        onClose={() => setActiveModal(null)}
+        onSubscriptionUpdated={(updated) => {
+          setLocalSub(updated);
+          if (onSubscriptionUpdated) onSubscriptionUpdated(updated);
+          showToast(`Subscription updated to ${updated.planName}!`, 'success');
+        }}
+      />
+
+      {/* Account Settings Modal */}
+      <AccountSettingsModal
+        isOpen={activeModal === 'settings'}
+        profile={profile}
+        onClose={() => setActiveModal(null)}
+        onPreferencesUpdated={(updated) => {
+          if (onProfileUpdated) onProfileUpdated(updated);
+          showToast('Preferences saved successfully!', 'success');
+        }}
+        onPasswordUpdated={() => {
+          showToast('Password updated successfully!', 'success');
+        }}
+      />
 
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
