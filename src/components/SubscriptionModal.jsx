@@ -3,7 +3,7 @@ import {
   Sparkles, Check, X, Shield, Calendar, Users,
   Tag, ArrowRight, Loader2, Award, Zap, AlertCircle, CheckCircle2,
   QrCode, CreditCard, Landmark, Smartphone, Copy, Printer, ArrowLeft,
-  ShieldCheck, Lock, ExternalLink, HelpCircle
+  ShieldCheck, Lock, ExternalLink, HelpCircle, Clock, RefreshCw
 } from 'lucide-react';
 import {
   SUBSCRIPTION_PLANS,
@@ -43,6 +43,34 @@ export const SubscriptionModal = ({
   const [paymentError, setPaymentError] = useState('');
   const [completedReceipt, setCompletedReceipt] = useState(null);
 
+  // 1-Minute Timer & Session for Dynamic UPI QR Code
+  const [qrTimer, setQrTimer] = useState(60);
+  const [qrSessionId, setQrSessionId] = useState(() => Date.now());
+
+  // Reset & start 1-minute countdown when checkout opens or qrSessionId changes
+  useEffect(() => {
+    if (!isOpen || modalView !== 'checkout') return;
+
+    setQrTimer(60);
+
+    const interval = setInterval(() => {
+      setQrTimer((prev) => {
+        if (prev <= 1) {
+          return 0; // Expired after 1 minute (60 seconds)
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isOpen, modalView, qrSessionId]);
+
+  const handleRegenerateQr = () => {
+    setQrSessionId(Date.now());
+    setQrTimer(60);
+    setPaymentError('');
+  };
+
   useEffect(() => {
     if (activeSubscription) {
       setSelectedPlanTier(activeSubscription.planTier || 'pro');
@@ -61,6 +89,7 @@ export const SubscriptionModal = ({
     setPaymentError('');
     setUtrNumber('');
     setCompletedReceipt(null);
+    setQrTimer(60);
     onClose();
   };
 
@@ -105,6 +134,8 @@ export const SubscriptionModal = ({
     setCheckoutPlan(plan);
     setPaymentError('');
     setUtrNumber('');
+    setQrSessionId(Date.now());
+    setQrTimer(60);
     setModalView('checkout');
   };
 
@@ -254,7 +285,7 @@ export const SubscriptionModal = ({
   const currentCheckoutPricing = checkoutPlan ? getPlanPricing(checkoutPlan) : { rawPrice: 0, discount: 0, finalPrice: 0 };
   const merchantUpi = MERCHANT_PAYMENT_CONFIG.upiId;
   const merchantName = MERCHANT_PAYMENT_CONFIG.merchantName;
-  const upiIntentUrl = `upi://pay?pa=${merchantUpi}&pn=${encodeURIComponent(merchantName)}&am=${currentCheckoutPricing.finalPrice}&cu=INR&tn=${encodeURIComponent(`${checkoutPlan?.name || 'Plan'} License`)}`;
+  const upiIntentUrl = `upi://pay?pa=${merchantUpi}&pn=${encodeURIComponent(merchantName)}&am=${currentCheckoutPricing.finalPrice}&cu=INR&tr=SKMS${qrSessionId}&tn=${encodeURIComponent(`${checkoutPlan?.name || 'Plan'} License`)}`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(upiIntentUrl)}&margin=8`;
 
   return (
@@ -582,15 +613,70 @@ export const SubscriptionModal = ({
                   {paymentMethod === 'upi' && (
                     <div className="payment-method-panel">
                       <div className="upi-qr-card-layout">
-                        {/* Dynamic Scannable QR Code */}
+                        {/* Dynamic Scannable QR Code with 1-Minute Expiry & Regeneration */}
                         <div className="upi-qr-frame">
-                          <img
-                            src={qrCodeUrl}
-                            alt="Scan UPI QR Code to Pay"
-                            className="upi-qr-img"
-                          />
-                          <div className="upi-amount-tag">
-                            ₹{currentCheckoutPricing.finalPrice.toLocaleString('en-IN')}
+                          {qrTimer === 0 ? (
+                            <div className="upi-qr-expired-overlay animate-scale-up">
+                              <div className="expired-icon-circle">
+                                <Clock className="icon-md text-amber" />
+                              </div>
+                              <h4 className="expired-title">QR Code Expired</h4>
+                              <p className="expired-subtext">Session expired (1 min limit). Click below to generate a new QR.</p>
+                              <button
+                                type="button"
+                                className="btn-regenerate-qr"
+                                onClick={handleRegenerateQr}
+                              >
+                                <RefreshCw className="icon-xs" />
+                                <span>Generate New QR</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <img
+                                src={qrCodeUrl}
+                                alt="Scan UPI QR Code to Pay"
+                                className="upi-qr-img"
+                              />
+                              <div className="upi-amount-tag">
+                                ₹{currentCheckoutPricing.finalPrice.toLocaleString('en-IN')}
+                              </div>
+                            </>
+                          )}
+
+                          {/* 1-Minute Live Countdown Timer Badge & Progress */}
+                          <div className="upi-timer-container">
+                            {qrTimer > 0 ? (
+                              <div className={`upi-countdown-badge ${qrTimer <= 15 ? 'timer-urgent' : ''}`}>
+                                <Clock className={`icon-xs timer-icon ${qrTimer <= 15 ? 'pulse-fast text-danger' : 'text-primary'}`} />
+                                <span>
+                                  Valid for: <strong>00:{String(qrTimer).padStart(2, '0')}</strong>
+                                </span>
+                                <button
+                                  type="button"
+                                  className="btn-qr-quick-refresh"
+                                  onClick={handleRegenerateQr}
+                                  title="Generate fresh QR code now"
+                                  aria-label="Regenerate QR Code"
+                                >
+                                  <RefreshCw className="icon-xs" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="upi-countdown-badge timer-expired">
+                                <AlertCircle className="icon-xs text-danger" />
+                                <span>Expired (00:00)</span>
+                              </div>
+                            )}
+
+                            {qrTimer > 0 && (
+                              <div className="upi-timer-progress-track">
+                                <div
+                                  className={`upi-timer-progress-bar ${qrTimer <= 15 ? 'bg-danger' : 'bg-primary'}`}
+                                  style={{ width: `${(qrTimer / 60) * 100}%` }}
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -625,13 +711,13 @@ export const SubscriptionModal = ({
                               Pay directly via installed UPI app:
                             </span>
                             <div className="upi-apps-row">
-                              <a href={`phonepe://pay?pa=${merchantUpi}&pn=${encodeURIComponent(merchantName)}&am=${currentCheckoutPricing.finalPrice}&cu=INR`} className="btn-upi-app phonepe">
+                              <a href={`phonepe://pay?pa=${merchantUpi}&pn=${encodeURIComponent(merchantName)}&am=${currentCheckoutPricing.finalPrice}&cu=INR&tr=SKMS${qrSessionId}`} className="btn-upi-app phonepe">
                                 PhonePe
                               </a>
-                              <a href={`tez://upi/pay?pa=${merchantUpi}&pn=${encodeURIComponent(merchantName)}&am=${currentCheckoutPricing.finalPrice}&cu=INR`} className="btn-upi-app gpay">
+                              <a href={`tez://upi/pay?pa=${merchantUpi}&pn=${encodeURIComponent(merchantName)}&am=${currentCheckoutPricing.finalPrice}&cu=INR&tr=SKMS${qrSessionId}`} className="btn-upi-app gpay">
                                 Google Pay
                               </a>
-                              <a href={`paytmmp://pay?pa=${merchantUpi}&pn=${encodeURIComponent(merchantName)}&am=${currentCheckoutPricing.finalPrice}&cu=INR`} className="btn-upi-app paytm">
+                              <a href={`paytmmp://pay?pa=${merchantUpi}&pn=${encodeURIComponent(merchantName)}&am=${currentCheckoutPricing.finalPrice}&cu=INR&tr=SKMS${qrSessionId}`} className="btn-upi-app paytm">
                                 Paytm
                               </a>
                               <a href={upiIntentUrl} className="btn-upi-app gpay">

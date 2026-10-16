@@ -45,7 +45,7 @@ export const SUBSCRIPTION_PLANS = [
     name: 'Enterprise Plan',
     tagline: 'Full power for high-volume franchises & corporate centers',
     popular: false,
-    monthlyPrice: 4999,
+    monthlyPrice: 2999,
     yearlyPrice: 11999, // ~33% savings
     maxStaffLimit: 999, // Unlimited
     features: [
