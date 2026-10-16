@@ -328,8 +328,8 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
                   aria-label="Filter by account status"
                 >
                   <option value="all">All Status ({staffMembersCount})</option>
-                  <option value="active">Active({activeCount})</option>
-                  <option value="inactive">Inactive({inactiveCount})</option>
+                  <option value="active">Active ({activeCount})</option>
+                  <option value="inactive">Inactive ({inactiveCount})</option>
                 </select>
               </div>
             </div>
