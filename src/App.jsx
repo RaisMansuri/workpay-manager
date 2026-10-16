@@ -527,6 +527,7 @@ export function App() {
       {/* 2. Subscription Plan Modal */}
       <SubscriptionModal
         isOpen={activeModal === 'subscription'}
+        profile={profile}
         activeSubscription={activeSubscription}
         staffCount={staffCount}
         onClose={handleCloseActiveModal}

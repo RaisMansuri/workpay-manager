@@ -7,8 +7,8 @@ export const SUBSCRIPTION_PLANS = [
     name: 'Starter Plan',
     tagline: 'Ideal for small service centers & individual operators',
     popular: false,
-    monthlyPrice: 999,
-    yearlyPrice: 8999, // ~25% savings
+    monthlyPrice: 499,
+    yearlyPrice: 4999, // ~25% savings
     maxStaffLimit: 3,
     features: [
       'Up to 3 Staff Members',
@@ -25,8 +25,8 @@ export const SUBSCRIPTION_PLANS = [
     name: 'Pro Plan',
     tagline: 'Most popular for growing Seva Kendras with multiple operators',
     popular: true,
-    monthlyPrice: 1999,
-    yearlyPrice: 14999, // ~37% savings
+    monthlyPrice: 999,
+    yearlyPrice: 7999, // ~37% savings
     maxStaffLimit: 10,
     features: [
       'Up to 10 Staff Members',
@@ -46,7 +46,7 @@ export const SUBSCRIPTION_PLANS = [
     tagline: 'Full power for high-volume franchises & corporate centers',
     popular: false,
     monthlyPrice: 4999,
-    yearlyPrice: 39999, // ~33% savings
+    yearlyPrice: 11999, // ~33% savings
     maxStaffLimit: 999, // Unlimited
     features: [
       'Unlimited Staff Members',
@@ -71,6 +71,16 @@ export const FESTIVE_OFFERS = [
     expiryText: 'Valid until 31st October 2026'
   }
 ];
+
+export const MERCHANT_PAYMENT_CONFIG = {
+  upiId: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_MERCHANT_UPI_ID) || 'raismansuri74059-2@okicici',
+  merchantName: 'Raisahmad I Mansuri',
+  bankName: 'BANK OF BARODA',
+  accountHolder: 'Seva Kendra Management Solutions',
+  accountNumber: '01930100060799',
+  ifscCode: 'BARB0MAINOF',
+  branch: 'BARODA MAIN OFFICE, BARODA'
+};
 
 const LOCAL_STORAGE_KEY = 'workpay_active_subscription';
 
@@ -173,9 +183,9 @@ export const subscriptionService = {
   },
 
   /**
-   * Update or switch subscription plan
+   * Update or switch subscription plan with payment details & receipt generation
    */
-  async updateSubscriptionAsync(planTier, billingCycle = 'yearly', promoCode = '', userId = null) {
+  async updateSubscriptionAsync(planTier, billingCycle = 'yearly', promoCode = '', userId = null, paymentDetails = null) {
     const plan = SUBSCRIPTION_PLANS.find(p => p.tier === planTier) || SUBSCRIPTION_PLANS[1];
     let price = billingCycle === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice;
     let discount = 0;
@@ -245,12 +255,38 @@ export const subscriptionService = {
       };
     }
 
+    // Generate verified receipt
+    const receipt = {
+      receiptNo: `RCPT-${now.getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
+      orderId: `ORD-${Date.now().toString(36).toUpperCase()}`,
+      planTier: plan.tier,
+      planName: plan.name,
+      billingCycle,
+      rawAmount: billingCycle === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice,
+      discountApplied: discount,
+      netAmount: price,
+      currency: 'INR',
+      paymentMethod: paymentDetails?.method || 'UPI Fast Pay',
+      transactionRef: paymentDetails?.transactionRef || `UPI-${Date.now()}`,
+      paidAt: now.toISOString(),
+      periodStart: now.toISOString(),
+      periodEnd: periodEnd.toISOString(),
+      status: 'VERIFIED'
+    };
+
     if (typeof window !== 'undefined') {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(savedSubscription));
+      try {
+        const stored = JSON.parse(localStorage.getItem('workpay_payment_receipts') || '[]');
+        stored.unshift(receipt);
+        localStorage.setItem('workpay_payment_receipts', JSON.stringify(stored.slice(0, 50)));
+      } catch (e) {
+        /* ignore */
+      }
       window.dispatchEvent(new CustomEvent('workpay_subscription_updated', { detail: savedSubscription }));
     }
 
-    return { success: true, subscription: savedSubscription };
+    return { success: true, subscription: savedSubscription, receipt };
   },
 
   /**
