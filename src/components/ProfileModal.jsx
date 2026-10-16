@@ -295,70 +295,73 @@ export const ProfileModal = ({ isOpen, profile, onClose, onProfileUpdated, activ
               </div>
             )}
 
-            {/* Form Fields */}
-            <div className="form-group mb-3">
-              <label className="form-label required">
-                <User className="icon-xs text-primary mr-1" /> Full Name
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. Suleman Mansuri"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-              />
-            </div>
+            {/* Form Fields: 2-Column Grid */}
+            <div className="profile-fields-2col-grid">
+              {/* Field 1: Full Name */}
+              <div className="form-group">
+                <label className="form-label">
+                  <User className="icon-xs text-primary mr-1" />
+                  <span>Full Name <span className="required-star">*</span></span>
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="e.g. Suleman Mansuri"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
+              </div>
 
-            {/* Email Address (Read-only login identity) */}
-            <div className="form-group mb-3">
-              <label className="form-label">
-                <Mail className="icon-xs text-primary mr-1" /> Email Address
-                <span className="text-muted text-xs font-normal ml-1.5">(Login Identifier)</span>
-              </label>
-              <input
-                type="email"
-                className="form-control"
-                value={email}
-                disabled
-                readOnly
-                style={{ background: '#f8fafc', color: '#64748b', cursor: 'not-allowed' }}
-              />
-              <span className="text-xs text-muted mt-1 block">
-                Email is tied to your Supabase security account.
-              </span>
-            </div>
+              {/* Field 2: Email Address (Read-only login identifier) */}
+              <div className="form-group">
+                <label className="form-label">
+                  <Mail className="icon-xs text-primary mr-1" />
+                  <span>Email Address <span className="text-muted text-xs font-normal ml-1">(Login ID)</span></span>
+                </label>
+                <input
+                  type="email"
+                  className="form-control"
+                  value={email}
+                  disabled
+                  readOnly
+                  title="Email is tied to your Supabase security account"
+                  style={{ background: '#f8fafc', color: '#64748b', cursor: 'not-allowed' }}
+                />
+              </div>
 
-            {/* Mobile Number */}
-            <div className="form-group mb-3">
-              <label className="form-label">
-                <Phone className="icon-xs text-primary mr-1" /> Mobile Number
-              </label>
-              <input
-                type="tel"
-                maxLength={10}
-                className="form-control"
-                placeholder="e.g. 9876543210 (10 digits)"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-              />
-            </div>
+              {/* Field 3: Mobile Number */}
+              <div className="form-group">
+                <label className="form-label">
+                  <Phone className="icon-xs text-primary mr-1" />
+                  <span>Mobile Number</span>
+                </label>
+                <input
+                  type="tel"
+                  maxLength={10}
+                  className="form-control"
+                  placeholder="e.g. 9876543210 (10 digits)"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                />
+              </div>
 
-            {/* Role & Status Info Box */}
-            <div className="form-group mb-1">
-              <label className="form-label">
-                <Shield className="icon-xs text-primary mr-1" /> Account Privilege
-              </label>
-              <div className="profile-privilege-card">
-                <div className="privilege-item">
-                  <span className="privilege-label">Role:</span>
-                  <span className="privilege-value font-semibold text-primary">{roleLabel}</span>
-                </div>
-                <div className="privilege-item">
-                  <span className="privilege-label">Account Status:</span>
-                  <span className="badge badge-success-subtle">
-                    <span className="status-dot-green"></span> Active Live
-                  </span>
+              {/* Field 4: Account Privilege */}
+              <div className="form-group">
+                <label className="form-label">
+                  <Shield className="icon-xs text-primary mr-1" />
+                  <span>Account Privilege</span>
+                </label>
+                <div className="profile-privilege-card">
+                  <div className="privilege-item">
+                    <span className="privilege-label">Role:</span>
+                    <span className="privilege-value font-semibold text-primary">{roleLabel}</span>
+                  </div>
+                  <div className="privilege-item">
+                    <span className="badge badge-success-subtle">
+                      <span className="status-dot-green"></span> Active Live
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

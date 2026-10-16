@@ -244,6 +244,7 @@ export const StaffDashboard = ({ profile, onLogout, activeSubscription, onProfil
       {/* Subscription Modal */}
       <SubscriptionModal
         isOpen={activeModal === 'subscription'}
+        profile={profile}
         activeSubscription={localSub}
         staffCount={1}
         onClose={() => setActiveModal(null)}

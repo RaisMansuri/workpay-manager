@@ -7270,32 +7270,32 @@ button.btn-save-staff:hover {
 
 /* 1. Profile Setup Modal */
 .profile-setup-modal-box {
-  max-width: 540px !important;
-  width: 94% !important;
+  max-width: 620px !important;
+  width: 95% !important;
   border-radius: 20px !important;
 }
 
 .profile-avatar-banner-section {
   display: flex !important;
   align-items: center !important;
-  gap: 1.15rem !important;
-  padding: 1.1rem !important;
+  gap: 1rem !important;
+  padding: 0.85rem 1rem !important;
   background: linear-gradient(135deg, #f8fafc, #f1f5f9) !important;
   border-radius: 14px !important;
   border: 1px solid #e2e8f0 !important;
-  margin-bottom: 1rem !important;
+  margin-bottom: 0.85rem !important;
 }
 
 .profile-avatar-display-wrapper {
   position: relative !important;
-  width: 68px !important;
-  height: 68px !important;
+  width: 58px !important;
+  height: 58px !important;
   flex-shrink: 0 !important;
 }
 
 .profile-modal-avatar-img {
-  width: 68px !important;
-  height: 68px !important;
+  width: 58px !important;
+  height: 58px !important;
   border-radius: 50% !important;
   object-fit: cover !important;
   border: 2px solid #3b82f6 !important;
@@ -7303,12 +7303,12 @@ button.btn-save-staff:hover {
 }
 
 .profile-modal-avatar-placeholder {
-  width: 68px !important;
-  height: 68px !important;
+  width: 58px !important;
+  height: 58px !important;
   border-radius: 50% !important;
   background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
   color: #ffffff !important;
-  font-size: 1.4rem !important;
+  font-size: 1.25rem !important;
   font-weight: 800 !important;
   display: flex !important;
   align-items: center !important;
@@ -7320,8 +7320,8 @@ button.btn-save-staff:hover {
   position: absolute !important;
   bottom: -2px !important;
   right: -2px !important;
-  width: 26px !important;
-  height: 26px !important;
+  width: 24px !important;
+  height: 24px !important;
   border-radius: 50% !important;
   background: #2563eb !important;
   color: #ffffff !important;
@@ -7349,16 +7349,16 @@ button.btn-save-staff:hover {
 }
 
 .avatar-user-name {
-  font-size: 1.05rem !important;
+  font-size: 1rem !important;
   font-weight: 800 !important;
   color: #0f172a !important;
   margin: 0 !important;
 }
 
 .avatar-user-email {
-  font-size: 0.78rem !important;
+  font-size: 0.76rem !important;
   color: #64748b !important;
-  margin: 2px 0 8px 0 !important;
+  margin: 2px 0 6px 0 !important;
 }
 
 .avatar-quick-actions {
@@ -7398,15 +7398,15 @@ button.btn-save-staff:hover {
 
 /* Preset Avatars Row */
 .profile-preset-avatars-row {
-  margin-bottom: 1rem !important;
+  margin-bottom: 0.85rem !important;
 }
 
 .preset-label {
   display: block !important;
-  font-size: 0.74rem !important;
+  font-size: 0.72rem !important;
   font-weight: 700 !important;
   color: #64748b !important;
-  margin-bottom: 0.4rem !important;
+  margin-bottom: 0.35rem !important;
   text-transform: uppercase !important;
   letter-spacing: 0.03em !important;
 }
@@ -7416,13 +7416,13 @@ button.btn-save-staff:hover {
   align-items: center !important;
   gap: 0.55rem !important;
   overflow-x: auto !important;
-  padding-bottom: 4px !important;
+  padding-bottom: 2px !important;
 }
 
 .preset-avatar-thumb {
   position: relative !important;
-  width: 40px !important;
-  height: 40px !important;
+  width: 36px !important;
+  height: 36px !important;
   border-radius: 50% !important;
   border: 2px solid transparent !important;
   padding: 0 !important;
@@ -7458,15 +7458,47 @@ button.btn-save-staff:hover {
   color: #ffffff !important;
 }
 
+/* 2-Column Grid for Profile Modal Fields */
+.profile-fields-2col-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 0.75rem 1.1rem !important;
+  align-items: start !important;
+}
+
+.profile-fields-2col-grid .form-group {
+  margin-bottom: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.profile-fields-2col-grid .form-label {
+  margin-bottom: 0.3rem !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 20px !important;
+  white-space: nowrap !important;
+}
+
+.profile-fields-2col-grid .form-control {
+  height: 42px !important;
+  box-sizing: border-box !important;
+}
+
 /* Privilege box in Profile Modal */
 .profile-privilege-card {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 0.65rem 0.85rem !important;
+  padding: 0 0.85rem !important;
   background: #f8fafc !important;
   border: 1px solid #e2e8f0 !important;
-  border-radius: 10px !important;
+  border-radius: var(--radius-md, 8px) !important;
+  height: 42px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
 }
 
 .privilege-item {
@@ -7478,6 +7510,13 @@ button.btn-save-staff:hover {
 
 .privilege-label {
   color: #64748b !important;
+}
+
+@media (max-width: 640px) {
+  .profile-fields-2col-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
 }
 
 .modal-title-with-badge {
@@ -8017,6 +8056,785 @@ button.btn-save-staff:hover {
 
 .btn-apply-promo-code:hover {
   background: #1e293b !important;
+}
+
+/* ============================================================================
+   SUBSCRIPTION CHECKOUT & PAYMENT WORKFLOW
+   ============================================================================ */
+
+.checkout-view-wrapper {
+  animation: fadeIn 0.25s ease-out;
+}
+
+.checkout-nav-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 1.25rem !important;
+  padding-bottom: 0.85rem !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.btn-checkout-back {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  background: transparent !important;
+  border: 1px solid #cbd5e1 !important;
+  padding: 0.4rem 0.85rem !important;
+  border-radius: 8px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-checkout-back:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+.checkout-security-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  background: #f0fdf4 !important;
+  color: #166534 !important;
+  border: 1px solid #bbf7d0 !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  padding: 3px 9px !important;
+  border-radius: 9999px !important;
+}
+
+.checkout-main-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 1.25rem !important;
+}
+
+@media (min-width: 768px) {
+  .checkout-main-grid {
+    grid-template-columns: 1.45fr 1fr !important;
+  }
+}
+
+/* Payment Method Selection Tabs */
+.payment-tabs-bar {
+  display: flex !important;
+  gap: 0.5rem !important;
+  margin-bottom: 1rem !important;
+  background: #f1f5f9 !important;
+  padding: 4px !important;
+  border-radius: 12px !important;
+}
+
+.payment-tab-btn {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.4rem !important;
+  padding: 0.65rem 0.5rem !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+.payment-tab-btn.active {
+  background: #ffffff !important;
+  color: #2563eb !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.payment-tab-badge {
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  background: #22c55e !important;
+  color: #ffffff !important;
+  padding: 1px 5px !important;
+  border-radius: 4px !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Payment Panels */
+.payment-method-panel {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  padding: 1.25rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* UPI Payment Panel */
+.upi-qr-card-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 1.25rem !important;
+}
+
+@media (min-width: 600px) {
+  .upi-qr-card-layout {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+  }
+}
+
+.upi-qr-frame {
+  position: relative !important;
+  background: #ffffff !important;
+  padding: 0.85rem !important;
+  border-radius: 16px !important;
+  border: 2px solid #2563eb !important;
+  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.25) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+.upi-qr-img {
+  width: 170px !important;
+  height: 170px !important;
+  border-radius: 8px !important;
+  display: block !important;
+}
+
+.upi-amount-tag {
+  margin-top: 0.5rem !important;
+  font-size: 0.84rem !important;
+  font-weight: 800 !important;
+  color: #1d4ed8 !important;
+  background: #eff6ff !important;
+  padding: 3px 10px !important;
+  border-radius: 9999px !important;
+  border: 1px solid #bfdbfe !important;
+}
+
+/* 1-Minute Live Countdown Timer & QR Regeneration */
+.upi-timer-container {
+  width: 100% !important;
+  margin-top: 0.6rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+.upi-countdown-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  font-size: 0.76rem !important;
+  color: #1e293b !important;
+  background: #f1f5f9 !important;
+  padding: 4px 10px !important;
+  border-radius: 9999px !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+}
+
+.upi-countdown-badge.timer-urgent {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border-color: #fecaca !important;
+}
+
+.upi-countdown-badge.timer-expired {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border-color: #fecaca !important;
+}
+
+.btn-qr-quick-refresh {
+  background: none !important;
+  border: none !important;
+  padding: 2px !important;
+  cursor: pointer !important;
+  color: #64748b !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  transition: transform 0.2s ease, color 0.2s ease !important;
+  margin-left: 2px !important;
+}
+
+.btn-qr-quick-refresh:hover {
+  color: #2563eb !important;
+  transform: rotate(90deg) !important;
+}
+
+.upi-timer-progress-track {
+  width: 100% !important;
+  height: 4px !important;
+  background: #e2e8f0 !important;
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+}
+
+.upi-timer-progress-bar {
+  height: 100% !important;
+  transition: width 1s linear, background-color 0.3s ease !important;
+  border-radius: 9999px !important;
+}
+
+.upi-qr-expired-overlay {
+  width: 170px !important;
+  height: 170px !important;
+  background: #fffafa !important;
+  border: 1.5px dashed #f87171 !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.75rem !important;
+  text-align: center !important;
+}
+
+.expired-icon-circle {
+  width: 36px !important;
+  height: 36px !important;
+  background: #fee2e2 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.expired-title {
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: #b91c1c !important;
+  margin: 0 !important;
+}
+
+.expired-subtext {
+  font-size: 0.68rem !important;
+  color: #7f1d1d !important;
+  margin: 2px 0 8px 0 !important;
+  line-height: 1.2 !important;
+}
+
+.btn-regenerate-qr {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.3rem !important;
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-regenerate-qr:hover {
+  background: #1d4ed8 !important;
+  transform: translateY(-1px) !important;
+}
+
+.upi-instructions-side {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+}
+
+.upi-id-box {
+  background: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+  border-radius: 10px !important;
+  padding: 0.6rem 0.85rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.5rem !important;
+}
+
+.upi-id-text {
+  font-family: monospace !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.btn-copy-mini {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  transition: all 0.15s ease !important;
+}
+
+.btn-copy-mini:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.upi-apps-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  flex-wrap: wrap !important;
+}
+
+.btn-upi-app {
+  padding: 0.35rem 0.65rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.3rem !important;
+  border: 1px solid transparent !important;
+  transition: transform 0.15s ease !important;
+}
+
+.btn-upi-app:hover {
+  transform: translateY(-1px) !important;
+}
+
+.btn-upi-app.gpay {
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+}
+
+.btn-upi-app.phonepe {
+  background: #5f259f !important;
+  color: #ffffff !important;
+}
+
+.btn-upi-app.paytm {
+  background: #00b9f1 !important;
+  color: #ffffff !important;
+}
+
+/* UTR Verification Section */
+.utr-verify-block {
+  margin-top: 1rem !important;
+  padding-top: 1rem !important;
+  border-top: 1px solid #f1f5f9 !important;
+}
+
+.utr-label {
+  display: block !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.utr-input-group {
+  display: flex !important;
+  gap: 0.5rem !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.utr-text-input {
+  flex: 1 !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.6rem 0.85rem !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  background: #f8fafc !important;
+}
+
+.utr-text-input:focus {
+  background: #ffffff !important;
+  border-color: #2563eb !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+.btn-verify-activate {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+  padding: 0.6rem 1.15rem !important;
+  border: none !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  white-space: nowrap !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-verify-activate:hover:not(:disabled) {
+  background: #1d4ed8 !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-verify-activate:disabled {
+  opacity: 0.65 !important;
+  cursor: not-allowed !important;
+}
+
+.btn-demo-simulate {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  color: #d97706 !important;
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+  padding: 4px 9px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  margin-top: 0.4rem !important;
+  transition: all 0.15s ease !important;
+}
+
+.btn-demo-simulate:hover {
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+}
+
+/* Razorpay & Bank Panels */
+.gateway-card-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+}
+
+.gateway-brands-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  flex-wrap: wrap !important;
+}
+
+.brand-pill {
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+.bank-details-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 0.65rem !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 0.85rem !important;
+  margin-bottom: 0.85rem !important;
+}
+
+.bank-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-size: 0.8rem !important;
+}
+
+.bank-row-label {
+  color: #64748b !important;
+  font-weight: 500 !important;
+}
+
+.bank-row-val {
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+/* Order Summary Box */
+.order-summary-sidebar {
+  background: #f8fafc !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  padding: 1.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+}
+
+.summary-card-title {
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  margin: 0 !important;
+}
+
+.summary-plan-badge {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 10px !important;
+  padding: 0.75rem !important;
+}
+
+.summary-plan-name {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  color: #1e3a8a !important;
+  margin: 0 0 2px 0 !important;
+}
+
+.summary-plan-cycle {
+  font-size: 0.76rem !important;
+  color: #3b82f6 !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+.summary-features-mini {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0.5rem 0 0 0 !important;
+  font-size: 0.76rem !important;
+  color: #475569 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+}
+
+.summary-price-breakdown {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.45rem !important;
+  padding: 0.75rem 0 !important;
+  border-top: 1px solid #e2e8f0 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  font-size: 0.82rem !important;
+}
+
+.price-break-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  color: #64748b !important;
+}
+
+.price-break-row.discount {
+  color: #16a34a !important;
+  font-weight: 700 !important;
+}
+
+.price-break-total {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  margin-top: 0.25rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+
+.total-green-val {
+  color: #15803d !important;
+  font-size: 1.35rem !important;
+}
+
+/* Receipt View */
+.receipt-view-wrapper {
+  animation: fadeIn 0.3s ease !important;
+  padding: 0.5rem 0 !important;
+}
+
+.receipt-success-header {
+  text-align: center !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.receipt-success-icon {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  background: #dcfce7 !important;
+  color: #16a34a !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 0.65rem !important;
+  box-shadow: 0 0 0 8px #f0fdf4 !important;
+}
+
+.receipt-title {
+  font-size: 1.35rem !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+  margin: 0 0 0.25rem 0 !important;
+}
+
+.receipt-subtitle {
+  font-size: 0.82rem !important;
+  color: #64748b !important;
+  margin: 0 !important;
+}
+
+.printable-invoice-box {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 14px !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1.25rem !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+.invoice-header-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+  padding-bottom: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.invoice-brand-title {
+  font-size: 1.1rem !important;
+  font-weight: 900 !important;
+  color: #1e3a8a !important;
+  margin: 0 !important;
+}
+
+.invoice-brand-sub {
+  font-size: 0.74rem !important;
+  color: #64748b !important;
+  margin: 2px 0 0 0 !important;
+}
+
+.invoice-meta-side {
+  text-align: right !important;
+  font-size: 0.75rem !important;
+  color: #64748b !important;
+}
+
+.invoice-meta-num {
+  font-weight: 800 !important;
+  color: #0f172a !important;
+}
+
+.invoice-details-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 0.82rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.invoice-details-table th {
+  text-align: left !important;
+  background: #f8fafc !important;
+  padding: 0.5rem 0.65rem !important;
+  color: #475569 !important;
+  font-weight: 700 !important;
+  border-bottom: 1.5px solid #e2e8f0 !important;
+}
+
+.invoice-details-table td {
+  padding: 0.65rem !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+.invoice-total-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 1.15rem !important;
+  font-weight: 900 !important;
+  padding-top: 0.75rem !important;
+  border-top: 2px solid #0f172a !important;
+  color: #0f172a !important;
+}
+
+.invoice-stamp-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1px solid #86efac !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  padding: 4px 10px !important;
+  border-radius: 9999px !important;
+  letter-spacing: 0.04em !important;
+}
+
+.receipt-actions-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.75rem !important;
+}
+
+.btn-print-receipt {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  background: #ffffff !important;
+  color: #334155 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  padding: 0.6rem 1.15rem !important;
+  border-radius: 10px !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-print-receipt:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+.btn-done-dashboard {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border: none !important;
+  padding: 0.6rem 1.35rem !important;
+  border-radius: 10px !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-done-dashboard:hover {
+  background: #059669 !important;
+  transform: translateY(-1px) !important;
 }
 
 /* 3. Account Settings Modal */
@@ -8645,7 +9463,12 @@ button.btn-save-staff:hover {
   overflow: hidden !important;
 }
 
-.profile-setup-modal-box .modal-body,
+.profile-setup-modal-box .modal-body {
+  padding: 1rem 1.4rem !important;
+  max-height: calc(88vh - 120px) !important;
+  overflow-y: auto !important;
+}
+
 .account-settings-modal-box .modal-body {
   padding: 1.5rem 1.75rem !important;
   max-height: calc(85vh - 130px) !important;
