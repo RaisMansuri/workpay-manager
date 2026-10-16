@@ -279,28 +279,91 @@ export const staffService = {
 
   /**
    * Update or Reset Staff Password
+   * Supports:
+   * 1. Self password update (logged-in Admin / staff updating their own password) via supabase.auth.updateUser
+   * 2. Admin resetting another staff member's password via PostgreSQL SECURITY DEFINER RPC 'admin_reset_user_password'
    */
-  async updateStaffPasswordAsync(staffId, newPassword) {
+  async updateStaffPasswordAsync(staffId, newPassword, staffEmail = null) {
     const nowISO = new Date().toISOString();
 
     if (!newPassword || newPassword.length < 6) {
       return { success: false, error: 'Password must be at least 6 characters long.' };
     }
 
-    if (isSupabaseConfigured() && supabase) {
-      try {
-        const { error } = await supabase
+    if (!isSupabaseConfigured() || !supabase) {
+      return { success: false, error: 'Database connection is not configured.' };
+    }
+
+    try {
+      // 1. Check current authenticated user session
+      const { data: authData, error: getUserErr } = await supabase.auth.getUser();
+      const currentUser = authData?.user;
+
+      const isSelf = currentUser && (
+        currentUser.id === staffId ||
+        (currentUser.email && staffEmail && currentUser.email.toLowerCase() === staffEmail.toLowerCase())
+      );
+
+      if (isSelf) {
+        // Case A: User is updating their OWN password (e.g. suleman95 / admin@sevakendra.com)
+        const { error: authUpdateError } = await supabase.auth.updateUser({
+          password: newPassword
+        });
+
+        if (authUpdateError) {
+          console.error('Self password update auth error:', authUpdateError);
+          return { success: false, error: authUpdateError.message || 'Failed to update password.' };
+        }
+
+        // Update profiles updated_at
+        await supabase
           .from('profiles')
           .update({ updated_at: nowISO })
           .eq('id', staffId);
 
-        if (error) console.warn('Supabase password update notice:', error.message);
-      } catch (err) {
-        console.error('Password update exception:', err);
-      }
-    }
+        return { success: true, message: 'Password updated successfully!' };
+      } else {
+        // Case B: Admin is resetting another staff member's password
+        const { data: rpcData, error: rpcError } = await supabase.rpc('admin_reset_user_password', {
+          p_user_id: staffId,
+          p_new_password: newPassword
+        });
 
-    return { success: true, message: 'Password updated successfully!' };
+        if (rpcError) {
+          console.error('RPC admin_reset_user_password error:', rpcError);
+
+          if (
+            rpcError.code === 'PGRST202' ||
+            rpcError.message?.includes('schema cache') ||
+            rpcError.message?.includes('admin_reset_user_password')
+          ) {
+            return {
+              success: false,
+              error: "Database setup required: Please execute 'supabase_reset_password_rpc.sql' in your Supabase SQL Editor to allow Admin to reset other staff passwords."
+            };
+          }
+
+          return { success: false, error: rpcError.message || 'Failed to reset staff password.' };
+        }
+
+        // Also update profiles updated_at
+        await supabase
+          .from('profiles')
+          .update({ updated_at: nowISO })
+          .eq('id', staffId);
+
+        return {
+          success: true,
+          message: `Password updated successfully for ${staffEmail || 'staff member'}!`
+        };
+      }
+    } catch (err) {
+      console.error('Password reset exception:', err);
+      return {
+        success: false,
+        error: err.message || 'An unexpected error occurred while updating password.'
+      };
+    }
   },
 
   /**

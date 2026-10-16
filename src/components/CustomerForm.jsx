@@ -198,7 +198,7 @@ export const CustomerForm = ({
             {Object.keys(errors).length > 0 && (
               <div className="alert-box alert-error mb-4" style={{ display: 'flex', alignItems: 'center', background: '#fef2f2', border: '1px solid #fecaca', padding: '0.75rem 1rem', borderRadius: '10px', color: '#dc2626', fontSize: '0.85rem', fontWeight: 600 }}>
                 <span style={{ marginRight: '0.5rem' }}>⚠️</span>
-                <span>Please fill in all required fields marked with * before saving.</span>
+                <span>Please fill in all required fields marked with <strong className="required-star">*</strong> before saving.</span>
               </div>
             )}
             {/* SECTION 1: Customer Details */}
@@ -212,7 +212,7 @@ export const CustomerForm = ({
                 <div className="form-group">
                   <label className="form-label" htmlFor="customerName">
                     <User className="input-icon" />
-                    Customer Name *
+                    <span>Customer Name <span className="required-star">*</span></span>
                   </label>
                   <input
                     type="text"
@@ -229,7 +229,7 @@ export const CustomerForm = ({
                 <div className="form-group">
                   <label className="form-label" htmlFor="mobileNumber">
                     <Phone className="input-icon" />
-                    Mobile Number *
+                    <span>Mobile Number <span className="required-star">*</span></span>
                   </label>
                   <input
                     type="tel"
@@ -270,7 +270,7 @@ export const CustomerForm = ({
               <div className="form-group">
                 <label className="form-label" htmlFor="serviceType">
                   <Layers className="input-icon" />
-                  Service Type *
+                  <span>Service Type <span className="required-star">*</span></span>
                 </label>
                 <select
                   id="serviceType"
@@ -290,7 +290,7 @@ export const CustomerForm = ({
                 <div className="form-group">
                   <label className="form-label" htmlFor="customServiceType">
                     <Layers className="input-icon" />
-                    Specify Custom Service *
+                    <span>Specify Custom Service <span className="required-star">*</span></span>
                   </label>
                   <input
                     type="text"
@@ -307,7 +307,7 @@ export const CustomerForm = ({
               <div className="form-group">
                 <label className="form-label" htmlFor="requirement">
                   <Layers className="input-icon" />
-                  Customer Requirement *
+                  <span>Customer Requirement <span className="required-star">*</span></span>
                 </label>
                 <select
                   id="requirement"
@@ -342,7 +342,7 @@ export const CustomerForm = ({
 
               <div className="form-group mb-0">
                 <label className="form-label">
-                  Work Status *
+                  <span>Work Status <span className="required-star">*</span></span>
                 </label>
                 <div className="status-selector-grid">
                   <button
@@ -384,7 +384,7 @@ export const CustomerForm = ({
                   <div className="form-group mb-0">
                     <label className="form-label" htmlFor="totalAmount">
                       <IndianRupee className="input-icon" />
-                      Total Amount (₹) *
+                      <span>Total Amount (₹) <span className="required-star">*</span></span>
                     </label>
                     <input
                       type="number"
@@ -401,7 +401,7 @@ export const CustomerForm = ({
                   <div className="form-group mb-0">
                     <label className="form-label" htmlFor="paidAmount">
                       <IndianRupee className="input-icon" />
-                      Paid Amount (₹) *
+                      <span>Paid Amount (₹) <span className="required-star">*</span></span>
                     </label>
                     <input
                       type="number"

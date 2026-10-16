@@ -802,7 +802,7 @@ export const CustomerTable = ({
               onChange={(e) => setSelectedStatus(e.target.value)}
               aria-label="Filter by work status"
             >
-              <option value="All">All Statuses ({records.length})</option>
+              <option value="All">All Status({records.length})</option>
               <option value={WORK_STATUS.PENDING}>
                 Pending ({records.filter((r) => r.status === WORK_STATUS.PENDING).length})
               </option>

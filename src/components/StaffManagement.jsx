@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  Users, UserPlus, Search, Shield, CheckCircle2, XCircle, 
-  Edit3, Loader2, RefreshCw, MoreVertical, KeyRound, 
+import {
+  Users, UserPlus, Search, Shield, CheckCircle2, XCircle,
+  Edit3, Loader2, RefreshCw, MoreVertical, KeyRound,
   AlertTriangle, X, Clock, Filter, Calendar, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight
 } from 'lucide-react';
 import { staffService } from '../services/staffService';
@@ -17,7 +17,7 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  
+
   // Subscription state for seat limit validation
   const [activeSubscription, setActiveSubscription] = useState(() => {
     if (propSubscription) return propSubscription;
@@ -58,7 +58,7 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
       window.removeEventListener('workpay_subscription_updated', handleSubChange);
     };
   }, [profile]);
-  
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -165,7 +165,7 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
       staff,
       newStatus,
       title: newStatus === 'active' ? 'Activate Staff Account?' : 'Deactivate Staff Account?',
-      message: newStatus === 'active' 
+      message: newStatus === 'active'
         ? `Are you sure you want to activate ${staff.full_name}'s account? They will be granted access to the portal.`
         : `Are you sure you want to deactivate ${staff.full_name}'s account? Their portal access will be instantly blocked.`
     });
@@ -189,13 +189,13 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
 
   // Filter staff list based on search and status
   const filteredStaff = staffList.filter((staff) => {
-    const matchesSearch = 
+    const matchesSearch =
       (staff.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (staff.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (staff.mobile || '').includes(searchTerm);
 
-    const matchesStatus = 
-      statusFilter === 'all' || 
+    const matchesStatus =
+      statusFilter === 'all' ||
       staff.status === statusFilter;
 
     return matchesSearch && matchesStatus;
@@ -327,14 +327,25 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
                   onChange={(e) => setStatusFilter(e.target.value)}
                   aria-label="Filter by account status"
                 >
-                  <option value="all">All Statuses ({staffMembersCount})</option>
-                  <option value="active">Active Only ({activeCount})</option>
-                  <option value="inactive">Inactive Only ({inactiveCount})</option>
+                  <option value="all">All Status ({staffMembersCount})</option>
+                  <option value="active">Active({activeCount})</option>
+                  <option value="inactive">Inactive({inactiveCount})</option>
                 </select>
               </div>
             </div>
 
             <div className="table-actions-group create-refresh-inline-row">
+              <button
+                type="button"
+                className="btn-toolbar-refresh"
+                onClick={loadStaffList}
+                disabled={isLoading}
+                title="Refresh staff records"
+                aria-label="Refresh staff records"
+              >
+                <RefreshCw className={`icon-sm ${isLoading ? 'spinner-icon' : ''}`} />
+              </button>
+
               {canAddStaff ? (
                 <button
                   type="button"
@@ -345,7 +356,7 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
                   <span>Create New Staff</span>
                 </button>
               ) : (
-                <div 
+                <div
                   className="staff-limit-badge"
                   title={`Staff seat limit reached (${staffMembersCount}/${maxStaffLimit}) for ${activeSubscription?.planName || 'Plan'}. Upgrade subscription plan to add more staff.`}
                   onClick={onOpenSubscription}
@@ -358,16 +369,6 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
                   )}
                 </div>
               )}
-
-              <button
-                type="button"
-                className="btn-toolbar-refresh"
-                onClick={loadStaffList}
-                title="Refresh staff records"
-                aria-label="Refresh staff records"
-              >
-                <RefreshCw className={`icon-sm ${isLoading ? 'spinner-icon' : ''}`} />
-              </button>
             </div>
           </div>
         </div>
@@ -711,8 +712,8 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
               <button type="button" className="btn btn-secondary" onClick={() => setConfirmDialog(null)}>
                 Cancel
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className={`btn ${confirmDialog.type === 'status' && confirmDialog.newStatus === 'inactive' ? 'btn-danger' : 'btn-primary'}`}
                 onClick={handleExecuteStatusToggle}
               >
