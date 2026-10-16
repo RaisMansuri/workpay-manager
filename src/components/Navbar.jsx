@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Building2, LogOut, Loader2, LayoutDashboard, Users, 
+import {
+  Building2, LogOut, Loader2, LayoutDashboard, Users,
   ChevronDown, User, Settings, Sparkles, Shield, Check, CreditCard
 } from 'lucide-react';
 
-export const Navbar = ({ 
-  profile, 
-  onLogout, 
-  onExportCSV, 
-  activeTab = 'dashboard', 
+export const Navbar = ({
+  profile,
+  onLogout,
+  onExportCSV,
+  activeTab = 'dashboard',
   onTabChange,
   onOpenProfile,
   onOpenSubscription,
@@ -133,10 +133,10 @@ export const Navbar = ({
               >
                 <div className="avatar-wrapper">
                   {avatarUrl ? (
-                    <img 
-                      src={avatarUrl} 
-                      alt={displayName} 
-                      className="user-avatar-img" 
+                    <img
+                      src={avatarUrl}
+                      alt={displayName}
+                      className="user-avatar-img"
                     />
                   ) : (
                     <div className="user-avatar">{initials}</div>
@@ -151,8 +151,8 @@ export const Navbar = ({
 
               {/* Floating Profile Dropdown Card */}
               {isProfileDropdownOpen && (
-                <div 
-                  className="profile-dropdown-menu animate-fade-in-down" 
+                <div
+                  className="profile-dropdown-menu animate-fade-in-down"
                   role="menu"
                   aria-orientation="vertical"
                 >
@@ -160,10 +160,10 @@ export const Navbar = ({
                   <div className="dropdown-user-header">
                     <div className="dropdown-avatar-box">
                       {avatarUrl ? (
-                        <img 
-                          src={avatarUrl} 
-                          alt={displayName} 
-                          className="dropdown-avatar-img" 
+                        <img
+                          src={avatarUrl}
+                          alt={displayName}
+                          className="dropdown-avatar-img"
                         />
                       ) : (
                         <div className="dropdown-avatar-initials">{initials}</div>
@@ -172,7 +172,7 @@ export const Navbar = ({
                     <div className="dropdown-user-meta">
                       <h4 className="dropdown-user-name">{displayName}</h4>
                       <p className="dropdown-user-email">{profile?.email || 'user@sevakendra.com'}</p>
-                      
+
                       <div className="dropdown-badges-row">
                         <span className="badge badge-role-tag">
                           <Shield className="icon-xs mr-1" />
