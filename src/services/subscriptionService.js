@@ -7,8 +7,8 @@ export const SUBSCRIPTION_PLANS = [
     name: 'Starter Plan',
     tagline: 'Ideal for small service centers & individual operators',
     popular: false,
-    monthlyPrice: 499,
-    yearlyPrice: 4999, // ~25% savings
+    monthlyPrice: 199,
+    yearlyPrice: 999, // ~25% savings
     maxStaffLimit: 3,
     features: [
       'Up to 3 Staff Members',
@@ -25,8 +25,8 @@ export const SUBSCRIPTION_PLANS = [
     name: 'Pro Plan',
     tagline: 'Most popular for growing Seva Kendras with multiple operators',
     popular: true,
-    monthlyPrice: 999,
-    yearlyPrice: 7999, // ~37% savings
+    monthlyPrice: 299,
+    yearlyPrice: 1499, // ~37% savings
     maxStaffLimit: 10,
     features: [
       'Up to 10 Staff Members',
@@ -45,8 +45,8 @@ export const SUBSCRIPTION_PLANS = [
     name: 'Enterprise Plan',
     tagline: 'Full power for high-volume franchises & corporate centers',
     popular: false,
-    monthlyPrice: 2999,
-    yearlyPrice: 11999, // ~33% savings
+    monthlyPrice: 499,
+    yearlyPrice: 3499, // ~33% savings
     maxStaffLimit: 999, // Unlimited
     features: [
       'Unlimited Staff Members',
