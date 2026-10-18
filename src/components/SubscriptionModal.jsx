@@ -976,32 +976,34 @@ export const SubscriptionModal = ({
                   <strong>Billed To:</strong> {profile?.full_name || 'Admin'} ({profile?.email || 'admin@sevakendra.com'})
                 </div>
 
-                <table className="invoice-details-table">
-                  <thead>
-                    <tr>
-                      <th>Plan Description</th>
-                      <th>Billing Cycle</th>
-                      <th>Staff Seats</th>
-                      <th>Valid Till</th>
-                      <th className="text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="font-bold">{completedReceipt.planName}</td>
-                      <td>{completedReceipt.billingCycle === 'yearly' ? 'Annual (365 Days)' : 'Monthly (30 Days)'}</td>
-                      <td>{checkoutPlan?.maxStaffLimit >= 900 ? 'Unlimited' : checkoutPlan?.maxStaffLimit || 10} Seats</td>
-                      <td>{formatDateOnly(completedReceipt.periodEnd)}</td>
-                      <td className="text-right font-bold">₹{completedReceipt.rawAmount.toLocaleString('en-IN')}</td>
-                    </tr>
-                    {completedReceipt.discountApplied > 0 && (
+                <div className="invoice-table-wrapper">
+                  <table className="invoice-details-table">
+                    <thead>
                       <tr>
-                        <td colSpan="4" className="text-green font-medium">Festive Coupon Discount ({appliedPromo || 'SEVA25'})</td>
-                        <td className="text-right text-green font-bold">-₹{completedReceipt.discountApplied.toLocaleString('en-IN')}</td>
+                        <th>Plan Description</th>
+                        <th>Billing Cycle</th>
+                        <th>Staff Seats</th>
+                        <th>Valid Till</th>
+                        <th className="text-right">Amount</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="font-bold">{completedReceipt.planName}</td>
+                        <td>{completedReceipt.billingCycle === 'yearly' ? 'Annual (365 Days)' : 'Monthly (30 Days)'}</td>
+                        <td>{checkoutPlan?.maxStaffLimit >= 900 ? 'Unlimited' : checkoutPlan?.maxStaffLimit || 10} Seats</td>
+                        <td>{formatDateOnly(completedReceipt.periodEnd)}</td>
+                        <td className="text-right font-bold">₹{completedReceipt.rawAmount.toLocaleString('en-IN')}</td>
+                      </tr>
+                      {completedReceipt.discountApplied > 0 && (
+                        <tr>
+                          <td colSpan="4" className="text-green font-medium">Festive Coupon Discount ({appliedPromo || 'SEVA25'})</td>
+                          <td className="text-right text-green font-bold">-₹{completedReceipt.discountApplied.toLocaleString('en-IN')}</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
                 <div className="invoice-total-row">
                   <div>

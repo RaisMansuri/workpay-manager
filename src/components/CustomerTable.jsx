@@ -1201,7 +1201,7 @@ export const CustomerTable = ({
                 <div className="mobile-card-actions">
                   <span className="ledger-date-text">
                     <Clock className="icon-xs inline-icon" />
-                    {formatDateTime(record.createdAt)}
+                    <span className="ledger-date-value">{formatDateTime(record.createdAt)}</span>
                   </span>
 
                   <div className="action-buttons-group mobile-actions-right">
