@@ -172,6 +172,16 @@ const FilterPopover = ({
 
   if (!isOpen) return null;
 
+  const handleReset = () => {
+    setDraftStatus('All');
+    setDraftService('All');
+    setDraftRequirement('All');
+    setDraftDateOption('All Time');
+    setDraftFromDate('');
+    setDraftToDate('');
+    onResetFilters();
+  };
+
   const handleApply = () => {
     onApplyFilters({
       status: draftStatus,
@@ -206,7 +216,7 @@ const FilterPopover = ({
             <SlidersHorizontal className="icon-sm" />
             <span>Filters</span>
           </div>
-          <button className="drawer-close-btn" onClick={onClose} title="Close Filters (Esc)">
+          <button type="button" className="filter-close-btn" onClick={onClose} title="Close Filters (Esc)" aria-label="Close Filters">
             <X className="icon-sm" />
           </button>
         </div>
@@ -214,7 +224,7 @@ const FilterPopover = ({
         <div className="filter-modal-body">
           {/* Work Status Section */}
           <div className="filter-section">
-            <label className="filter-section-label">Work Status</label>
+            <label className="filter-section-label">WORK STATUS</label>
             <div className="filter-pills-grid">
               {['All', WORK_STATUS.PENDING, WORK_STATUS.IN_PROGRESS, WORK_STATUS.COMPLETED].map((st) => (
                 <button
@@ -229,11 +239,28 @@ const FilterPopover = ({
             </div>
           </div>
 
+          {/* Customer Requirement Section */}
+          <div className="filter-section">
+            <label className="filter-section-label">CUSTOMER REQUIREMENT</label>
+            <select
+              className="filter-select"
+              value={draftRequirement}
+              onChange={(e) => setDraftRequirement(e.target.value)}
+            >
+              <option value="All">All Requirements</option>
+              {CUSTOMER_REQUIREMENTS.map((req) => (
+                <option key={req} value={req}>
+                  {req}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Service Type Section */}
           <div className="filter-section">
-            <label className="filter-section-label">Service Type</label>
+            <label className="filter-section-label">SERVICE TYPE</label>
             <select
-              className="form-select filter-select"
+              className="filter-select"
               value={draftService}
               onChange={(e) => setDraftService(e.target.value)}
             >
@@ -248,7 +275,7 @@ const FilterPopover = ({
 
           {/* Date Filter Section */}
           <div className="filter-section">
-            <label className="filter-section-label">Date Filter</label>
+            <label className="filter-section-label">DATE FILTER</label>
             <div className="date-options-grid">
               {DATE_OPTIONS.map((opt) => (
                 <button
@@ -288,10 +315,10 @@ const FilterPopover = ({
         </div>
 
         <div className="filter-modal-footer">
-          <button type="button" className="btn btn-secondary flex-1" onClick={onResetFilters}>
+          <button type="button" className="btn-filter-reset" onClick={handleReset}>
             Reset
           </button>
-          <button type="button" className="btn btn-primary flex-1" onClick={handleApply}>
+          <button type="button" className="btn-filter-apply" onClick={handleApply}>
             Apply
           </button>
         </div>
@@ -654,12 +681,13 @@ export const CustomerTable = ({
     return matchesSearch && matchesStatus && matchesService && matchesRequirement && matchesDate && matchesStaff;
   });
 
-  const activeFilterCount =
+  const activeFiltersCount =
     (selectedStatus !== 'All' ? 1 : 0) +
     (selectedService !== 'All' ? 1 : 0) +
     (selectedRequirement !== 'All' ? 1 : 0) +
     (selectedDateOption !== 'All Time' ? 1 : 0) +
     (isAdmin && selectedStaff !== 'All' ? 1 : 0);
+  const activeFilterCount = activeFiltersCount;
 
   const handleApplyMobileFilters = ({ status, service, requirement, dateOption, fromDate: fD, toDate: tD }) => {
     setSelectedStatus(status);
@@ -778,6 +806,20 @@ export const CustomerTable = ({
               aria-label="Refresh customer records"
             >
               <RefreshCw className={`icon-sm ${isRefreshing ? 'spinner-icon' : ''}`} />
+            </button>
+
+            <button
+              type="button"
+              className={`btn-toolbar-filters ${activeFiltersCount > 0 ? 'has-active-filters' : ''}`}
+              onClick={() => setIsFilterPanelOpen(true)}
+              title="Filter customer records"
+              aria-label="Filter customer records"
+            >
+              <SlidersHorizontal className="icon-sm" />
+              <span>Filters</span>
+              {activeFiltersCount > 0 && (
+                <span className="filter-badge-count">{activeFiltersCount}</span>
+              )}
             </button>
 
             <button
@@ -1246,6 +1288,7 @@ export const CustomerTable = ({
         records={records}
         selectedStatus={selectedStatus}
         selectedService={selectedService}
+        selectedRequirement={selectedRequirement}
         selectedDateOption={selectedDateOption}
         fromDate={fromDate}
         toDate={toDate}
