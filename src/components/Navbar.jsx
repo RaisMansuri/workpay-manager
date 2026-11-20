@@ -178,10 +178,12 @@ export const Navbar = ({
                           <Shield className="icon-xs mr-1" />
                           {displayRole}
                         </span>
-                        <span className="badge badge-sub-tag">
-                          <span className="status-dot-green"></span>
-                          {planName}
-                        </span>
+                        {isAdmin && (
+                          <span className="badge badge-sub-tag">
+                            <span className="status-dot-green"></span>
+                            {planName}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -206,24 +208,26 @@ export const Navbar = ({
                       </div>
                     </button>
 
-                    {/* Item 2: Subscription Plan */}
-                    <button
-                      type="button"
-                      className="dropdown-menu-item"
-                      role="menuitem"
-                      onClick={() => handleItemSelect(onOpenSubscription)}
-                    >
-                      <div className="menu-item-icon bg-purple-subtle text-purple">
-                        <Sparkles className="icon-sm" />
-                      </div>
-                      <div className="menu-item-text">
-                        <div className="menu-item-title-row">
-                          <span className="menu-item-title">Subscription Plan</span>
-                          <span className="badge-item-highlight">Active</span>
+                    {/* Item 2: Subscription Plan (Admin Only) */}
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        className="dropdown-menu-item"
+                        role="menuitem"
+                        onClick={() => handleItemSelect(onOpenSubscription)}
+                      >
+                        <div className="menu-item-icon bg-purple-subtle text-purple">
+                          <Sparkles className="icon-sm" />
                         </div>
-                        <span className="menu-item-desc">View plans, billing & festive offers</span>
-                      </div>
-                    </button>
+                        <div className="menu-item-text">
+                          <div className="menu-item-title-row">
+                            <span className="menu-item-title">Subscription Plan</span>
+                            <span className="badge-item-highlight">Active</span>
+                          </div>
+                          <span className="menu-item-desc">View plans, billing & festive offers</span>
+                        </div>
+                      </button>
+                    )}
 
                     {/* Item 3: Account Settings */}
                     <button

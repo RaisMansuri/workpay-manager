@@ -183,7 +183,7 @@ export const ProfileModal = ({ isOpen, profile, onClose, onProfileUpdated, activ
                   <Shield className="icon-xs mr-1" />
                   {roleLabel}
                 </span>
-                {activeSubscription && (
+                {isAdmin && activeSubscription && (
                   <span className="badge badge-sub-pill">
                     <Sparkles className="icon-xs mr-1" />
                     {activeSubscription.planName}
