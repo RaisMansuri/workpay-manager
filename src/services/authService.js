@@ -7,10 +7,10 @@ export const authService = {
    *  User Login -> Supabase Auth -> Verify Email+Password in Database -> Fetch Profile from DB -> Check Status (active/inactive) -> Check Role -> Grant Access
    */
   async signIn(email, password) {
-    let cleanEmail = (email || '').trim().toLowerCase();
+    const rawInput = (email || '').trim();
 
-    if (!cleanEmail || !password) {
-      return { success: false, error: 'Please enter both email/username and password.' };
+    if (!rawInput || !password) {
+      return { success: false, error: 'Please enter both username/email and password.' };
     }
 
     if (!isSupabaseConfigured() || !supabase) {
@@ -20,20 +20,118 @@ export const authService = {
       };
     }
 
-    try {
-      // 1. Resolve email from profiles table if username typed without @ domain (e.g., 'admin' or 'rahul')
-      if (!cleanEmail.includes('@')) {
-        const { data: matchedProfile } = await supabase
-          .from('profiles')
-          .select('email')
-          .or(`email.ilike.${cleanEmail}@%,full_name.ilike.%${cleanEmail}%`)
-          .maybeSingle();
+    let cleanEmail = rawInput.toLowerCase();
 
-        if (matchedProfile?.email) {
-          cleanEmail = matchedProfile.email.toLowerCase();
+    try {
+      // 1. Resolve email from profiles table if username typed without @ domain (e.g., 'rehan', 'admin', 'Rais Mansuri')
+      if (!rawInput.includes('@')) {
+        let resolvedEmail = null;
+
+        // A. Match by exact full_name (case-insensitive)
+        try {
+          const { data: exactNameData } = await supabase
+            .from('profiles')
+            .select('email')
+            .ilike('full_name', rawInput)
+            .limit(1);
+
+          if (exactNameData && exactNameData.length > 0 && exactNameData[0]?.email) {
+            resolvedEmail = exactNameData[0].email;
+          }
+        } catch (_) {
+          /* ignore */
+        }
+
+        // B. Match where email username/prefix matches (e.g. 'rehan' matches 'rehan@gmail.com')
+        if (!resolvedEmail) {
+          try {
+            const { data: prefixData } = await supabase
+              .from('profiles')
+              .select('email')
+              .ilike('email', `${rawInput}@%`)
+              .limit(1);
+
+            if (prefixData && prefixData.length > 0 && prefixData[0]?.email) {
+              resolvedEmail = prefixData[0].email;
+            }
+          } catch (_) {
+            /* ignore */
+          }
+        }
+
+        // C. Match where full_name contains the keyword (e.g. 'rehan' in 'Rehan Ansari')
+        if (!resolvedEmail) {
+          try {
+            const { data: partialNameData } = await supabase
+              .from('profiles')
+              .select('email')
+              .ilike('full_name', `%${rawInput}%`)
+              .limit(1);
+
+            if (partialNameData && partialNameData.length > 0 && partialNameData[0]?.email) {
+              resolvedEmail = partialNameData[0].email;
+            }
+          } catch (_) {
+            /* ignore */
+          }
+        }
+
+        // D. Match by mobile phone number if digits only
+        if (!resolvedEmail && /^\d+$/.test(rawInput)) {
+          try {
+            const { data: mobileData } = await supabase
+              .from('profiles')
+              .select('email')
+              .eq('mobile', rawInput)
+              .limit(1);
+
+            if (mobileData && mobileData.length > 0 && mobileData[0]?.email) {
+              resolvedEmail = mobileData[0].email;
+            }
+          } catch (_) {
+            /* ignore */
+          }
+        }
+
+        // E. Fallback search in cached profiles (localStorage)
+        if (!resolvedEmail && typeof window !== 'undefined') {
+          try {
+            const cached = localStorage.getItem('workpay_cached_staff_profiles');
+            if (cached) {
+              const list = JSON.parse(cached);
+              const low = rawInput.toLowerCase();
+              const found = list.find((s) => {
+                const sName = (s.full_name || '').toLowerCase();
+                const sEmail = (s.email || '').toLowerCase();
+                const sMobile = String(s.mobile || '');
+                return (
+                  sName === low ||
+                  sEmail.startsWith(`${low}@`) ||
+                  sName.includes(low) ||
+                  sMobile === rawInput
+                );
+              });
+              if (found?.email) {
+                resolvedEmail = found.email;
+              }
+            }
+          } catch (_) {
+            /* ignore */
+          }
+        }
+
+        // F. Final fallback for demo shortcuts or default domain
+        if (resolvedEmail) {
+          cleanEmail = resolvedEmail.toLowerCase();
         } else {
-          // Default domain fallback if username doesn't contain domain
-          cleanEmail = `${cleanEmail}@sevakendra.com`;
+          const low = rawInput.toLowerCase();
+          if (low === 'admin') {
+            cleanEmail = 'admin@sevakendra.com';
+          } else if (low === 'staff') {
+            cleanEmail = 'staff@sevakendra.com';
+          } else {
+            cleanEmail = `${low}@sevakendra.com`;
+          }
         }
       }
 
@@ -86,7 +184,7 @@ export const authService = {
       if (authError) {
         let msg = authError.message || '';
         if (msg.includes('Invalid login credentials') || msg.includes('invalid') || authError.status === 400) {
-          msg = 'Invalid email or password. Please check your credentials and try again.';
+          msg = 'Invalid username/email or password. Please check your credentials and try again.';
         }
         return { success: false, error: msg };
       }

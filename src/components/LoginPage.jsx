@@ -20,20 +20,11 @@ export const LoginPage = ({ onLoginSuccess, initialError = '' }) => {
     e.preventDefault();
     setErrorMessage('');
 
-    const cleanEmail = email.trim();
+    const cleanInput = email.trim();
 
     // Validation checks
-    if (!cleanEmail) {
-      setErrorMessage('Please enter your email address');
-      return;
-    }
-
-    // Email format validation (unless simple demo shortcut 'admin' or 'staff' is used)
-    const isShortcut = cleanEmail === 'admin' || cleanEmail === 'staff';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!isShortcut && !emailRegex.test(cleanEmail)) {
-      setErrorMessage('Please enter a valid email address (e.g. test@mail.com)');
+    if (!cleanInput) {
+      setErrorMessage('Please enter your username or email address');
       return;
     }
 
@@ -45,12 +36,12 @@ export const LoginPage = ({ onLoginSuccess, initialError = '' }) => {
     setIsLoading(true);
 
     try {
-      const result = await authService.signIn(cleanEmail, password);
+      const result = await authService.signIn(cleanInput, password);
 
       if (result.success) {
         onLoginSuccess(result.user, result.profile);
       } else {
-        setErrorMessage(result.error || 'Invalid email or password');
+        setErrorMessage(result.error || 'Invalid username/email or password');
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -88,7 +79,7 @@ export const LoginPage = ({ onLoginSuccess, initialError = '' }) => {
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label htmlFor="loginEmail" className="form-label">
-              Email Address / Username
+              Username or Email Address
             </label>
             <div className="input-with-icon">
               <Mail className="input-icon" />
@@ -96,11 +87,11 @@ export const LoginPage = ({ onLoginSuccess, initialError = '' }) => {
                 id="loginEmail"
                 type="text"
                 className="form-input"
-                placeholder="e.g. user@example.com"
+                placeholder="Enter username or email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
-                autoComplete="email"
+                autoComplete="username"
                 autoFocus
               />
             </div>
