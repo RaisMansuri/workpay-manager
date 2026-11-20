@@ -1,166 +1,144 @@
 import React from 'react';
-import { X, Printer, Phone, MapPin, Building2, Clock, RotateCcw, CheckCircle2, MessageSquare, Edit3 } from 'lucide-react';
+import { X, Phone, MapPin, Building2, MessageSquare } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
-import { WORK_STATUS } from '../constants/serviceTypes';
 import { smsService } from '../services/smsService';
 
 export const CustomerDetailModal = ({ record, onClose, onEditRecord }) => {
   if (!record) return null;
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   const handleSendWhatsApp = () => {
     const link = smsService.getWhatsAppLink(record);
     window.open(link, '_blank');
   };
 
-  const hasBalance = record.remainingBalance > 0;
-
-  const getModalStatusBadge = (status) => {
-    switch (status) {
-      case WORK_STATUS.PENDING:
-        return (
-          <span className="badge-lg status-badge-pending">
-            Pending
-          </span>
-        );
-      case WORK_STATUS.IN_PROGRESS:
-        return (
-          <span className="badge-lg status-badge-in-progress">
-            In Progress
-          </span>
-        );
-      case WORK_STATUS.COMPLETED:
-        return (
-          <span className="badge-lg status-badge-completed">
-            Completed
-          </span>
-        );
-      default:
-        return <span className="badge-lg">{status}</span>;
-    }
-  };
+  const hasBalance = Number(record.remainingBalance) > 0;
 
   return (
     <div className="modal-overlay animate-fade-in" onClick={onClose}>
-      <div className="modal-container ticket-detail-modal-light animate-scale-up" onClick={(e) => e.stopPropagation()}>
-        {/* Modal Header */}
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <div className="modal-icon-badge">
-              <Building2 className="icon-md text-primary" />
-            </div>
-            <div>
-              <h3 className="modal-title">Seva Kendra Service Ticket</h3>
-              <p className="modal-subtitle">Service Request Receipt</p>
-            </div>
-          </div>
-          <button className="btn-close" onClick={onClose} aria-label="Close modal">
-            <X className="icon-sm" />
-          </button>
-        </div>
+        <div
+          className="modal-container seva-ticket-modal animate-scale-up"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Modal Header */}
+                <div className="seva-ticket-header">
+                  <div className="seva-ticket-header-left">
+                    <div className="seva-ticket-icon-box">
+                      <Building2 size={20} strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <h3 className="seva-ticket-title">Seva Kendra Service Ticket</h3>
+                      <p className="seva-ticket-subtitle">Service Request Receipt</p>
+                    </div>
+                  </div>
+                    <button className="seva-ticket-close-btn" onClick={onClose} aria-label="Close modal">
+                      <X size={18} strokeWidth={2.2} />
+                    </button>
+                </div>
 
-        {/* Modal Ticket Body */}
-        <div className="modal-body printable-area">
-          <div className="ticket-badge-row flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-            <h4 className="font-bold text-lg text-slate-900">{record.customerName}</h4>
-            {getModalStatusBadge(record.status)}
-          </div>
+                {/* Modal Ticket Body */}
+                    <div className="seva-ticket-body printable-area">
+                      {/* Customer Name & Status Row */}
+                      <div className="seva-ticket-top-row">
+                        <h4 className="seva-ticket-customer-heading">{record.customerName}</h4>
+                        <span className="seva-ticket-status-text">{record.status || 'In Progress'}</span>
+                      </div>
 
-          <div className="ticket-sections-wrapper space-y-4">
-            <div className="ticket-section detail-box-light mb-4">
-              <h5 className="ticket-section-title font-bold text-xs uppercase tracking-wider text-slate-500 mb-3">Customer Information</h5>
-              <div className="ticket-detail-item flex justify-between py-1 text-sm">
-                <span className="detail-label text-slate-500">Full Name:</span>
-                <span className="detail-value font-bold text-slate-900">{record.customerName}</span>
-              </div>
-              <div className="ticket-detail-item flex justify-between py-1 text-sm">
-                <span className="detail-label text-slate-500">Mobile Number:</span>
-                <span className="detail-value font-semibold text-slate-900 flex items-center gap-1">
-                  <Phone className="icon-xs text-primary" />
-                  {record.mobileNumber}
-                </span>
-              </div>
-              <div className="ticket-detail-item flex justify-between py-1 text-sm">
-                <span className="detail-label text-slate-500">Address:</span>
-                <span className="detail-value font-semibold text-slate-900 flex items-center gap-1">
-                  <MapPin className="icon-xs text-primary" />
-                  {record.address || 'Not specified'}
-                </span>
-              </div>
-            </div>
+                            {/* Two-Column Grid: Customer Information & Service Workflow Details */}
+                            <div className="seva-ticket-grid">
+                              {/* Column 1: Customer Information */}
+                              <div className="seva-ticket-col">
+                                <h5 className="seva-ticket-col-title">CUSTOMER INFORMATION</h5>
 
-            <div className="ticket-section detail-box-light mb-4">
-              <h5 className="ticket-section-title font-bold text-xs uppercase tracking-wider text-slate-500 mb-3">Service Workflow Details</h5>
-              <div className="ticket-detail-item flex justify-between py-1 text-sm">
-                <span className="detail-label text-slate-500">Service Type:</span>
-                <span className="detail-value font-bold text-blue-600">{record.serviceType}</span>
-              </div>
-              <div className="ticket-detail-item flex justify-between py-1 text-sm">
-                <span className="detail-label text-slate-500">Requirement:</span>
-                <span className="detail-value font-bold text-primary">{record.requirement || '—'}</span>
-              </div>
-              <div className="ticket-detail-item flex justify-between py-1 text-sm">
-                <span className="detail-label text-slate-500">Description:</span>
-                <span className="detail-value font-medium text-slate-700">{record.workDescription || 'No additional notes'}</span>
-              </div>
-              <div className="ticket-detail-item flex justify-between py-1 text-sm">
-                <span className="detail-label text-slate-500">Entry Date:</span>
-                <span className="detail-value font-medium text-slate-700">{formatDateTime(record.createdAt)}</span>
-              </div>
-            </div>
-          </div>
+                                <div className="seva-ticket-row">
+                                  <span className="seva-ticket-label">Full Name:</span>
+                                  <span className="seva-ticket-val">{record.customerName}</span>
+                                </div>
 
-          {/* Payment Summary Box */}
-          <div className="modal-billing-summary detail-box-light mt-4">
-            <h5 className="ticket-section-title font-bold text-xs uppercase tracking-wider text-slate-500 mb-3">Payment Summary</h5>
-            <div className="billing-rows space-y-2">
-              <div className="billing-row flex justify-between text-sm">
-                <span className="text-slate-600">Total Service Amount:</span>
-                <span className="font-bold text-slate-900">{formatCurrency(record.totalAmount)}</span>
-              </div>
-              <div className="billing-row flex justify-between text-sm">
-                <span className="text-slate-600">Amount Paid:</span>
-                <span className="font-bold text-green-600">{formatCurrency(record.paidAmount)}</span>
-              </div>
-              <div className="billing-row remaining-row flex justify-between text-sm pt-2 border-t border-slate-200">
-                <span className="font-bold text-slate-800">Remaining Due Balance:</span>
-                <span className={`font-bold ${hasBalance ? 'text-red-600' : 'text-green-600'}`}>
-                  {formatCurrency(record.remainingBalance)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+                                    <div className="seva-ticket-row">
+                                      <span className="seva-ticket-label">Mobile Number:</span>
+                                      <span className="seva-ticket-val seva-ticket-val-inline">
+                                        <Phone size={13} strokeWidth={2.2} />
+                                        <span>{record.mobileNumber}</span>
+                                      </span>
+                                    </div>
 
-        {/* Modal Footer Actions */}
-        <div className="modal-footer">
-          <button className="btn btn-whatsapp" onClick={handleSendWhatsApp} title="Send Ticket Message via WhatsApp">
-            <MessageSquare className="icon-sm" />
-            <span>Send WhatsApp / SMS</span>
-          </button>
+                                        <div className="seva-ticket-row">
+                                          <span className="seva-ticket-label">Address:</span>
+                                          <span className="seva-ticket-val-muted seva-ticket-val-inline">
+                                            <MapPin size={13} strokeWidth={2.2} />
+                                            <span>{record.address || 'Not specified'}</span>
+                                          </span>
+                                        </div>
+                                    </div>
 
-          <button className="btn btn-secondary" onClick={handlePrint}>
-            <Printer className="icon-sm" />
-            <span>Print Receipt</span>
-          </button>
+                                        {/* Column 2: Service Workflow Details */}
+                                        <div className="seva-ticket-col">
+                                          <h5 className="seva-ticket-col-title">SERVICE WORKFLOW DETAILS</h5>
 
-          <button 
-            className="btn btn-primary"
-            onClick={() => {
-              onClose();
-              onEditRecord(record);
-            }}
-          >
-            <Edit3 className="icon-sm" />
-            <span>Edit Record</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+                                          <div className="seva-ticket-row">
+                                            <span className="seva-ticket-label">Service Type:</span>
+                                            <span className="seva-ticket-val">{record.serviceType}</span>
+                                          </div>
+
+                                            <div className="seva-ticket-row">
+                                              <span className="seva-ticket-label">Requirement:</span>
+                                              <span className="seva-ticket-val">{record.requirement || 'Not specified'}</span>
+                                            </div>
+
+                                              <div className="seva-ticket-row">
+                                                <span className="seva-ticket-label">Description:</span>
+                                                <span className="seva-ticket-val" style={{ textTransform: 'uppercase' }}>
+                                                  {record.workDescription || record.description || 'Not specified'}
+                                                </span>
+                                              </div>
+
+                                                <div className="seva-ticket-row">
+                                                  <span className="seva-ticket-label">Entry Date:</span>
+                                                  <span className="seva-ticket-val-muted">{formatDateTime(record.createdAt)}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            {/* Payment Summary Box */}
+                                                <div className="seva-ticket-payment-box">
+                                                  <h5 className="seva-ticket-payment-title">PAYMENT SUMMARY</h5>
+
+                                                  <div className="seva-ticket-payment-row">
+                                                    <span className="seva-ticket-payment-label">Total Service Amount:</span>
+                                                    <span className="seva-ticket-payment-val">{formatCurrency(record.totalAmount)}</span>
+                                                  </div>
+
+                                                  <div className="seva-ticket-payment-row">
+                                                    <span className="seva-ticket-payment-label">Amount Paid:</span>
+                                                    <span className="seva-ticket-payment-val-green">{formatCurrency(record.paidAmount)}</span>
+                                                  </div>
+
+                                                  <hr className="seva-ticket-dotted-divider" />
+
+                                                  <div className="seva-ticket-payment-row">
+                                                    <span className="seva-ticket-payment-label">Remaining Due Balance:</span>
+                                                    <span className={hasBalance ? 'seva-ticket-payment-val-red' : 'seva-ticket-payment-val-green'}>
+                                                      {formatCurrency(record.remainingBalance)}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                              </div>
+
+                                                {/* Modal Footer: Only Send WhatsApp / SMS button */}
+                                                <div className="seva-ticket-footer">
+                                                  <button
+                                                    type="button"
+                                                    className="seva-ticket-whatsapp-btn"
+                                                    onClick={handleSendWhatsApp}
+                                                    title="Send Ticket Message via WhatsApp"
+                                                  >
+                                                    <MessageSquare size={16} strokeWidth={2.2} />
+                                                    <span>Send WhatsApp / SMS</span>
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            </div>
+                                            );
 };
 
-export default CustomerDetailModal;
+                                            export default CustomerDetailModal;

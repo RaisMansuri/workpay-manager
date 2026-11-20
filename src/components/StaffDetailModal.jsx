@@ -1,11 +1,11 @@
 import React from 'react';
 import { 
   X, User, Mail, Phone, Shield, Calendar, Clock, 
-  CheckCircle2, XCircle, FileText, Lock, Activity
+  CheckCircle2, XCircle, FileText, Lock, Activity, Trash2
 } from 'lucide-react';
 import { formatDateTime } from '../utils/formatters';
 
-export const StaffDetailModal = ({ staff, onClose, onToggleStatus }) => {
+export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff }) => {
   if (!staff) return null;
 
   const isActive = staff.status === 'active';
@@ -182,12 +182,27 @@ export const StaffDetailModal = ({ staff, onClose, onToggleStatus }) => {
 
         {/* Modal Footer */}
         <div className="modal-footer">
+          {onDeleteStaff && !isAdmin && (
+            <button
+              type="button"
+              className="btn btn-danger-outline"
+              onClick={() => {
+                onDeleteStaff(staff);
+                onClose();
+              }}
+              title="Permanently delete staff account"
+            >
+              <Trash2 className="icon-xs mr-1.5" />
+              <span>Delete Staff</span>
+            </button>
+          )}
+
           {onToggleStatus && !isAdmin && (
             <button
               type="button"
-              className={`btn ${isActive ? 'btn-danger-outline' : 'btn-success-outline'}`}
+              className={`btn ${isActive ? 'btn-warning-outline' : 'btn-success-outline'}`}
               onClick={() => {
-                onToggleStatus(staff.id, isActive ? 'inactive' : 'active');
+                onToggleStatus(staff);
                 onClose();
               }}
             >

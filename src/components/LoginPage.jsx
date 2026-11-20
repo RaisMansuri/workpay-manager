@@ -33,7 +33,7 @@ export const LoginPage = ({ onLoginSuccess, initialError = '' }) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!isShortcut && !emailRegex.test(cleanEmail)) {
-      setErrorMessage('Please enter a valid email address (e.g. admin@sevakendra.com)');
+      setErrorMessage('Please enter a valid email address (e.g. test@mail.com)');
       return;
     }
 
@@ -72,8 +72,8 @@ export const LoginPage = ({ onLoginSuccess, initialError = '' }) => {
 
         {/* Validation Error Alert */}
         {errorMessage && (
-          <div 
-            className={`login-error-alert ${errorMessage.toLowerCase().includes('deactivated') || errorMessage.toLowerCase().includes('inactive') ? 'deactivated-alert' : ''}`} 
+          <div
+            className={`login-error-alert ${errorMessage.toLowerCase().includes('deactivated') || errorMessage.toLowerCase().includes('inactive') ? 'deactivated-alert' : ''}`}
             role="alert"
           >
             <AlertCircle className="icon-sm flex-shrink-0" />

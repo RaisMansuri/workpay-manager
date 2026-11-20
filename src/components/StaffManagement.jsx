@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Users, UserPlus, Search, Shield, CheckCircle2, XCircle,
   Edit3, Loader2, RefreshCw, MoreVertical, KeyRound,
-  AlertTriangle, X, Clock, Filter, Calendar, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight
+  AlertTriangle, X, Clock, Filter, Calendar, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight,
+  Trash2
 } from 'lucide-react';
 import { staffService } from '../services/staffService';
 import { subscriptionService } from '../services/subscriptionService';
@@ -69,6 +70,7 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
   const [resetPasswordStaff, setResetPasswordStaff] = useState(null);
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const [isExecutingAction, setIsExecutingAction] = useState(false);
   const [toast, setToast] = useState(null);
 
   const menuRef = useRef(null);
@@ -172,18 +174,54 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
     setActiveMenuId(null);
   };
 
-  const handleExecuteStatusToggle = async () => {
-    if (!confirmDialog?.staff) return;
-    const { staff, newStatus } = confirmDialog;
-    setConfirmDialog(null);
+  // Handle Staff Deletion with Confirmation
+  const confirmDeleteStaff = (staff) => {
+    if (staff.role === 'admin') {
+      showToast('Admin accounts cannot be deleted.', 'warning');
+      return;
+    }
+    setConfirmDialog({
+      type: 'delete',
+      staff,
+      title: 'Delete Staff Member?',
+      message: `Are you sure you want to permanently delete the staff account for "${staff.full_name}" (${staff.email})? This action cannot be undone.`
+    });
+    setActiveMenuId(null);
+  };
 
-    const result = await staffService.updateStaffStatusAsync(staff.id, newStatus);
-    if (result.success) {
-      setStaffList(result.staffList);
-      const actionText = newStatus === 'active' ? 'activated' : 'deactivated';
-      showToast(`Account for ${staff.full_name} has been ${actionText}.`, 'info');
-    } else {
-      showToast('Failed to update staff status.', 'error');
+  const handleExecuteDialogAction = async () => {
+    if (!confirmDialog?.staff) return;
+    const { type, staff, newStatus } = confirmDialog;
+    setIsExecutingAction(true);
+
+    try {
+      if (type === 'delete') {
+        const result = await staffService.deleteStaffAsync(staff.id);
+        if (result.success) {
+          setStaffList(result.staffList);
+          showToast(`Staff member "${staff.full_name}" has been permanently deleted.`, 'success');
+          if (viewingStaff?.id === staff.id) {
+            setViewingStaff(null);
+          }
+        } else {
+          showToast(result.error || 'Failed to delete staff member.', 'error');
+        }
+      } else if (type === 'status') {
+        const result = await staffService.updateStaffStatusAsync(staff.id, newStatus);
+        if (result.success) {
+          setStaffList(result.staffList);
+          const actionText = newStatus === 'active' ? 'activated' : 'deactivated';
+          showToast(`Account for ${staff.full_name} has been ${actionText}.`, 'info');
+        } else {
+          showToast('Failed to update staff status.', 'error');
+        }
+      }
+    } catch (err) {
+      console.error('Error executing staff dialog action:', err);
+      showToast('An unexpected error occurred.', 'error');
+    } finally {
+      setIsExecutingAction(false);
+      setConfirmDialog(null);
     }
   };
 
@@ -472,19 +510,34 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
                             className="btn-action-icon"
                             onClick={() => setViewingStaff(staff)}
                             title="Edit Staff Details"
+                            aria-label={`Edit ${staff.full_name}`}
                           >
                             <Edit3 className="icon-sm" />
                           </button>
 
-                          {/* 3. Reset Password Key Icon Button */}
+                          {/* 2. Reset Password Key Icon Button */}
                           <button
                             type="button"
                             className="btn-action-icon btn-key-action"
                             onClick={() => setResetPasswordStaff(staff)}
                             title="Reset Staff Password"
+                            aria-label={`Reset password for ${staff.full_name}`}
                           >
                             <KeyRound className="icon-sm text-amber" />
                           </button>
+
+                          {/* 3. Delete Staff Icon Button (Non-Admin only) */}
+                          {!isAdmin && (
+                            <button
+                              type="button"
+                              className="btn-action-icon btn-delete-action text-danger"
+                              onClick={() => confirmDeleteStaff(staff)}
+                              title="Delete Staff Member"
+                              aria-label={`Delete ${staff.full_name}`}
+                            >
+                              <Trash2 className="icon-sm" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -599,6 +652,18 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
                           {isActive ? <XCircle className="icon-sm" /> : <CheckCircle2 className="icon-sm" />}
                         </button>
                       )}
+
+                      {!isAdmin && (
+                        <button
+                          type="button"
+                          className="mobile-action-btn btn-delete text-danger"
+                          onClick={() => confirmDeleteStaff(staff)}
+                          title="Delete Staff Member"
+                          aria-label={`Delete ${staff.full_name}`}
+                        >
+                          <Trash2 className="icon-sm" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -690,18 +755,31 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
 
       {/* Confirmation Action Dialog Modal */}
       {confirmDialog && (
-        <div className="modal-overlay animate-fade-in" onClick={() => setConfirmDialog(null)}>
+        <div className="modal-overlay animate-fade-in" onClick={() => !isExecutingAction && setConfirmDialog(null)}>
           <div className="modal-container confirm-modal-box animate-scale-up" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title-group">
-                <div className={`modal-icon-badge ${confirmDialog.type === 'status' && confirmDialog.newStatus === 'inactive' ? 'bg-red-light text-danger' : 'bg-blue-light text-primary'}`}>
-                  <AlertTriangle className="icon-md" />
+                <div className={`modal-icon-badge ${
+                  confirmDialog.type === 'delete' || (confirmDialog.type === 'status' && confirmDialog.newStatus === 'inactive')
+                    ? 'bg-red-light text-danger'
+                    : 'bg-blue-light text-primary'
+                }`}>
+                  {confirmDialog.type === 'delete' ? (
+                    <Trash2 className="icon-md" />
+                  ) : (
+                    <AlertTriangle className="icon-md" />
+                  )}
                 </div>
                 <div>
                   <h3 className="modal-title">{confirmDialog.title}</h3>
                 </div>
               </div>
-              <button type="button" className="btn-close" onClick={() => setConfirmDialog(null)}>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={() => setConfirmDialog(null)}
+                disabled={isExecutingAction}
+              >
                 <X className="icon-sm" />
               </button>
             </div>
@@ -709,15 +787,37 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
               <p className="text-dark font-medium leading-relaxed">{confirmDialog.message}</p>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={() => setConfirmDialog(null)}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setConfirmDialog(null)}
+                disabled={isExecutingAction}
+              >
                 Cancel
               </button>
               <button
                 type="button"
-                className={`btn ${confirmDialog.type === 'status' && confirmDialog.newStatus === 'inactive' ? 'btn-danger' : 'btn-primary'}`}
-                onClick={handleExecuteStatusToggle}
+                className={`btn ${
+                  confirmDialog.type === 'delete' || (confirmDialog.type === 'status' && confirmDialog.newStatus === 'inactive')
+                    ? 'btn-danger'
+                    : 'btn-primary'
+                }`}
+                onClick={handleExecuteDialogAction}
+                disabled={isExecutingAction}
               >
-                Confirm Action
+                {isExecutingAction ? (
+                  <>
+                    <Loader2 className="icon-sm spinner-icon mr-1.5" />
+                    <span>Processing...</span>
+                  </>
+                ) : confirmDialog.type === 'delete' ? (
+                  <>
+                    <Trash2 className="icon-xs mr-1.5" />
+                    <span>Delete Staff</span>
+                  </>
+                ) : (
+                  <span>Confirm Action</span>
+                )}
               </button>
             </div>
           </div>
@@ -738,6 +838,7 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
           staff={viewingStaff}
           onClose={() => setViewingStaff(null)}
           onToggleStatus={confirmToggleStatus}
+          onDeleteStaff={confirmDeleteStaff}
         />
       )}
 

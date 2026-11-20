@@ -9954,3 +9954,307 @@ button.btn-save-staff:hover {
 }
 
 
+
+
+/* ==========================================================================
+   SEVA KENDRA SERVICE TICKET MODAL (EXACT MATCH TO DESIGN)
+   ========================================================================== */
+.seva-ticket-modal {
+  background: #ffffff !important;
+  border-radius: 20px !important;
+  max-width: 580px !important;
+  width: 100% !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.16) !important;
+  border: 1px solid #e2e8f0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+}
+
+.seva-ticket-header {
+  padding: 18px 24px 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.seva-ticket-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.seva-ticket-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.seva-ticket-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.seva-ticket-subtitle {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+.seva-ticket-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.seva-ticket-close-btn:hover {
+  color: #334155;
+  background-color: #f1f5f9;
+}
+
+.seva-ticket-body {
+  padding: 20px 24px 16px 24px !important;
+}
+
+.seva-ticket-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 18px;
+}
+
+.seva-ticket-customer-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  margin: 0;
+  letter-spacing: -0.01em;
+  flex: 1;
+}
+
+.seva-ticket-status-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.seva-ticket-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-bottom: 20px;
+}
+
+.seva-ticket-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.seva-ticket-col-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 10px 0;
+}
+
+.seva-ticket-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.83rem;
+}
+
+.seva-ticket-label {
+  color: #64748b;
+  flex-shrink: 0;
+  font-weight: 400;
+}
+
+.seva-ticket-val {
+  color: #0f172a;
+  font-weight: 700;
+  text-align: right;
+  word-break: break-word;
+}
+
+.seva-ticket-val-muted {
+  color: #0f172a;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+.seva-ticket-val-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.seva-ticket-payment-box {
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-top: 4px;
+}
+
+.seva-ticket-payment-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 12px 0;
+}
+
+.seva-ticket-payment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  margin-bottom: 7px;
+}
+
+.seva-ticket-payment-row:last-child {
+  margin-bottom: 0;
+}
+
+.seva-ticket-payment-label {
+  color: #475569;
+  font-weight: 400;
+}
+
+.seva-ticket-payment-val {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.seva-ticket-payment-val-green {
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.seva-ticket-payment-val-red {
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.seva-ticket-dotted-divider {
+  border: none;
+  border-top: 1px dotted #cbd5e1;
+  margin: 10px 0;
+}
+
+.seva-ticket-footer {
+  padding: 12px 24px 20px 24px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background: #ffffff;
+}
+
+.seva-ticket-whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+}
+
+.seva-ticket-whatsapp-btn:hover {
+  background-color: #059669 !important;
+  transform: translateY(-1px);
+}
+
+.seva-ticket-whatsapp-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+  .seva-ticket-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .seva-ticket-modal {
+    width: 95% !important;
+    max-height: 94vh;
+    overflow-y: auto !important;
+  }
+}
+
+
+/* ==========================================================================
+   STAFF MANAGEMENT - DELETE BUTTON STYLES
+   ========================================================================== */
+.btn-delete-action {
+  color: #ef4444 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-delete-action:hover {
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+  transform: translateY(-1px);
+}
+
+.mobile-action-btn.btn-delete {
+  background: #fef2f2 !important;
+  color: #ef4444 !important;
+  border: 1px solid #fee2e2 !important;
+}
+
+.mobile-action-btn.btn-delete:hover {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+}
+
+.btn-warning-outline {
+  background: #fffbeb !important;
+  color: #d97706 !important;
+  border: 1px solid #fde68a !important;
+}
+
+.btn-warning-outline:hover {
+  background: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #b45309 !important;
+}

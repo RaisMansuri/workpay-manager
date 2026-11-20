@@ -252,6 +252,95 @@ export const staffService = {
   },
 
   /**
+   * Delete Staff Member dynamically
+   * 1. Verifies caller is not deleting themselves
+   * 2. Calls RPC 'admin_delete_staff_user' if available (deletes auth.users + public.profiles)
+   * 3. Fallback: Deletes from public.profiles table and unlinks customer_records
+   * 4. Updates localStorage cache & returns fresh staff list
+   */
+  async deleteStaffAsync(staffId) {
+    if (!staffId) {
+      return { success: false, error: 'Staff ID is required.' };
+    }
+
+    if (!isSupabaseConfigured() || !supabase) {
+      return { success: false, error: 'Database connection is not configured.' };
+    }
+
+    try {
+      // 1. Verify caller is not trying to delete their own account
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUser = authData?.user;
+      if (currentUser?.id === staffId) {
+        return { success: false, error: 'You cannot delete your own account.' };
+      }
+
+      let deleted = false;
+      let deleteError = null;
+
+      // 2. Try RPC 'admin_delete_staff_user' (cleans both auth.users & public.profiles)
+      try {
+        const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_delete_staff_user', {
+          p_user_id: staffId
+        });
+
+        if (!rpcErr && rpcRes) {
+          deleted = true;
+        } else if (rpcErr) {
+          console.warn('admin_delete_staff_user RPC notice, falling back to direct profiles deletion:', rpcErr.message);
+          deleteError = rpcErr;
+        }
+      } catch (rpcEx) {
+        console.warn('RPC call failed, attempting fallback delete on profiles table:', rpcEx);
+      }
+
+      // 3. Fallback: Direct delete from public.profiles table
+      if (!deleted) {
+        // First unlink customer records created_by / updated_by if any exist
+        try {
+          await supabase.from('customer_records').update({ created_by: null }).eq('created_by', staffId);
+          await supabase.from('customer_records').update({ updated_by: null }).eq('updated_by', staffId);
+        } catch (_) {
+          /* ignore */
+        }
+
+        const { error: profileDeleteErr } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', staffId);
+
+        if (profileDeleteErr) {
+          console.error('Failed to delete staff profile:', profileDeleteErr);
+          return {
+            success: false,
+            error: profileDeleteErr.message || deleteError?.message || 'Failed to delete staff member.'
+          };
+        }
+        deleted = true;
+      }
+
+      // 4. Update cached profiles in localStorage if present
+      try {
+        const cached = localStorage.getItem('workpay_cached_staff_profiles');
+        if (cached) {
+          const list = JSON.parse(cached);
+          const updatedList = list.filter((s) => s.id !== staffId);
+          localStorage.setItem('workpay_cached_staff_profiles', JSON.stringify(updatedList));
+        }
+      } catch (_) {
+        /* ignore */
+      }
+
+      // 5. Fetch fresh staff list
+      const freshList = await this.getStaffListAsync();
+      return { success: true, staffList: freshList };
+    } catch (err) {
+      console.error('Delete staff exception:', err);
+      return { success: false, error: err.message || 'An unexpected error occurred while deleting staff.' };
+    }
+  },
+
+  /**
    * Update Staff details (Full Name, Mobile, Role) dynamically in Supabase `profiles` table
    */
   async updateStaffProfileAsync(staffId, updates) {
