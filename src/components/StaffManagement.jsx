@@ -225,6 +225,30 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
     }
   };
 
+  // Handle direct staff email update from StaffDetailModal
+  const handleUpdateStaffEmail = async (staffId, newEmail) => {
+    try {
+      const result = await staffService.updateStaffEmailAsync(staffId, newEmail);
+      if (result.success) {
+        if (result.staffList) {
+          setStaffList(result.staffList);
+        }
+        if (viewingStaff?.id === staffId && result.staff) {
+          setViewingStaff((prev) => (prev ? { ...prev, ...result.staff, email: newEmail } : null));
+        }
+        showToast('Staff email ID updated successfully!', 'success');
+        return { success: true, staff: result.staff };
+      } else {
+        showToast(result.error || 'Failed to update email ID.', 'error');
+        return { success: false, error: result.error };
+      }
+    } catch (err) {
+      console.error('Error updating staff email:', err);
+      showToast('An unexpected error occurred while updating email.', 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
   // Filter staff list based on search and status
   const filteredStaff = staffList.filter((staff) => {
     const matchesSearch =
@@ -839,6 +863,7 @@ export const StaffManagement = ({ profile, activeSubscription: propSubscription,
           onClose={() => setViewingStaff(null)}
           onToggleStatus={confirmToggleStatus}
           onDeleteStaff={confirmDeleteStaff}
+          onUpdateEmail={handleUpdateStaffEmail}
         />
       )}
 

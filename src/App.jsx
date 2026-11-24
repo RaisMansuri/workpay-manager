@@ -7,6 +7,7 @@ import { CustomerDetailModal } from './components/CustomerDetailModal';
 import { DeleteConfirmModal } from './components/DeleteConfirmModal';
 import { Toast } from './components/Toast';
 import { LoginPage } from './components/LoginPage';
+import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { StaffDashboard } from './components/StaffDashboard';
 import { StaffManagement } from './components/StaffManagement';
 import { ProfileModal } from './components/ProfileModal';
@@ -85,7 +86,14 @@ export function App() {
 
             // Redirect logged-in users away from /login or default root or old /admin paths
             const path = window.location.pathname;
-            if (path === '/' || path === '/login' || path.startsWith('/admin')) {
+            const hash = window.location.hash || '';
+            const isRecovery = hash.includes('type=recovery') || path === '/reset-password';
+
+            if (isRecovery) {
+              if (path !== '/reset-password') {
+                navigate('/reset-password');
+              }
+            } else if (path === '/' || path === '/login' || path.startsWith('/admin')) {
               const target = (path === '/staff' || path === '/admin/staff') ? '/staff' : '/dashboard';
               navigate(target);
             } else if (['/profile', '/subscription', '/settings'].includes(path)) {
@@ -97,7 +105,16 @@ export function App() {
             if (authResult.isInactive || authResult.error) {
               setLoginInitialError(authResult.error || 'Your account has been deactivated. Please contact the administrator.');
             }
-            navigate('/login');
+            const path = window.location.pathname;
+            const hash = window.location.hash || '';
+            const isRecovery = hash.includes('type=recovery') || path === '/reset-password';
+            if (isRecovery) {
+              if (path !== '/reset-password') {
+                navigate('/reset-password');
+              }
+            } else {
+              navigate('/login');
+            }
           }
         }
       } catch (err) {
@@ -381,9 +398,38 @@ export function App() {
     );
   }
 
-  // 2. Unauthenticated -> Show Login Page
+  // 2. Password Reset Route or Recovery Link Handler
+  const isResetPasswordRoute =
+    currentPath === '/reset-password' ||
+    (typeof window !== 'undefined' && (
+      window.location.pathname === '/reset-password' ||
+      window.location.hash.includes('type=recovery')
+    ));
+
+  if (isResetPasswordRoute) {
+    return (
+      <ResetPasswordPage
+        onSuccess={() => {
+          navigate('/login');
+          setLoginInitialError('');
+          showToast('Password changed successfully! Please log in with your new password.', 'success');
+        }}
+        onBackToLogin={() => {
+          navigate('/login');
+        }}
+      />
+    );
+  }
+
+  // 3. Unauthenticated -> Show Login Page
   if (!session || !profile) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} initialError={loginInitialError} />;
+    return (
+      <LoginPage 
+        onLoginSuccess={handleLoginSuccess} 
+        initialError={loginInitialError} 
+        initialMode="login"
+      />
+    );
   }
 
   const userRole = (profile.role || 'staff').toLowerCase();

@@ -10258,3 +10258,150 @@ button.btn-save-staff:hover {
   border-color: #fcd34d !important;
   color: #b45309 !important;
 }
+
+.btn-primary-outline {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border: 1px solid #bfdbfe !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-primary-outline:hover {
+  background: #dbeafe !important;
+  border-color: #93c5fd !important;
+  color: #1d4ed8 !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15) !important;
+}
+
+.btn-text-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.btn-text-action:hover {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.info-card-content-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.info-card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.info-card-highlight {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  background-color: #f8faff !important;
+}
+
+.edit-email-form {
+  margin-top: 6px;
+  width: 100%;
+}
+
+.edit-email-input-group .form-input-sm {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  box-sizing: border-box;
+}
+
+.edit-email-input-group .form-input-sm:focus {
+  border-color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.edit-email-actions-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+
+/* ==========================================================================
+   FORGOT PASSWORD & AUTH RESET FLOW STYLING
+   ========================================================================== */
+.login-mode-title {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  margin-top: 0.85rem !important;
+  margin-bottom: 0.35rem !important;
+  text-align: center !important;
+}
+
+.login-mode-subtitle {
+  font-size: 0.85rem !important;
+  color: #64748b !important;
+  line-height: 1.45 !important;
+  margin-bottom: 1.25rem !important;
+  text-align: center !important;
+}
+
+.admin-help-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 0.75rem 0.95rem !important;
+  text-align: left !important;
+  line-height: 1.45 !important;
+}
+
+.back-to-login-row {
+  display: flex !important;
+  justify-content: center !important;
+  margin-top: 1.15rem !important;
+}
+
+.back-to-login-btn {
+  background: none !important;
+  border: none !important;
+  color: #64748b !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  transition: color 0.15s ease !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
+.back-to-login-btn:hover {
+  color: #2563eb !important;
+}
+
+.success-icon-badge {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #16a34a !important;
+}

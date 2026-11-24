@@ -1,15 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  X, User, Mail, Phone, Shield, Calendar, Clock, 
-  CheckCircle2, XCircle, FileText, Lock, Activity, Trash2
+  X, User, Mail, Phone, Shield, Calendar,
+  CheckCircle2, XCircle, Lock, Activity, Trash2,
+  Edit2, Check, Loader2, AlertCircle
 } from 'lucide-react';
 import { formatDateTime } from '../utils/formatters';
 
-export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff }) => {
+export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff, onUpdateEmail }) => {
+  const [currentStaff, setCurrentStaff] = useState(staff || {});
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [emailInput, setEmailInput] = useState(staff?.email || '');
+  const [emailError, setEmailError] = useState('');
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
+
+  useEffect(() => {
+    if (staff) {
+      setCurrentStaff(staff);
+      setEmailInput(staff.email || '');
+      setIsEditingEmail(false);
+      setEmailError('');
+    }
+  }, [staff]);
+
   if (!staff) return null;
 
-  const isActive = staff.status === 'active';
-  const isAdmin = staff.role === 'admin';
+  const isActive = currentStaff.status === 'active';
+  const isAdmin = currentStaff.role === 'admin';
 
   const getInitials = (name) => {
     if (!name) return 'ST';
@@ -33,6 +49,45 @@ export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff
     return gradients[Math.abs(hash) % gradients.length];
   };
 
+  const handleSaveEmail = async (e) => {
+    if (e) e.preventDefault();
+    setEmailError('');
+
+    const clean = (emailInput || '').trim().toLowerCase();
+    if (!clean) {
+      setEmailError('Email Address cannot be empty.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!clean.includes('@') || !emailRegex.test(clean)) {
+      setEmailError('Please enter a valid email address (e.g. name@domain.com).');
+      return;
+    }
+
+    if (clean === currentStaff.email?.toLowerCase()) {
+      setIsEditingEmail(false);
+      return;
+    }
+
+    setIsSavingEmail(true);
+    try {
+      if (onUpdateEmail) {
+        const res = await onUpdateEmail(currentStaff.id, clean);
+        if (res && res.success) {
+          setCurrentStaff((prev) => ({ ...prev, email: clean }));
+          setIsEditingEmail(false);
+        } else if (res && res.error) {
+          setEmailError(res.error);
+        }
+      }
+    } catch (err) {
+      setEmailError(err.message || 'Failed to update email.');
+    } finally {
+      setIsSavingEmail(false);
+    }
+  };
+
   return (
     <div className="modal-overlay animate-fade-in" onClick={onClose}>
       <div className="modal-container staff-detail-modal-light animate-scale-up" onClick={(e) => e.stopPropagation()}>
@@ -41,19 +96,19 @@ export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff
           <div className="modal-title-group">
             <div 
               className="staff-modal-avatar-lg"
-              style={{ background: getAvatarGradient(staff.full_name) }}
+              style={{ background: getAvatarGradient(currentStaff.full_name) }}
             >
-              {getInitials(staff.full_name)}
+              {getInitials(currentStaff.full_name)}
             </div>
             <div>
               <div className="staff-modal-name-row">
-                <h3 className="modal-title">{staff.full_name}</h3>
+                <h3 className="modal-title">{currentStaff.full_name}</h3>
                 <span className={`badge-pill ${isActive ? 'pill-active' : 'pill-inactive'}`}>
                   <span className="pill-dot" />
                   {isActive ? 'Active User' : 'Inactive'}
                 </span>
               </div>
-              <p className="modal-subtitle">{staff.email}</p>
+              <p className="modal-subtitle">{currentStaff.email}</p>
             </div>
           </div>
 
@@ -96,17 +151,102 @@ export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff
               </div>
               <div>
                 <span className="info-card-label">Full Name</span>
-                <p className="info-card-val">{staff.full_name}</p>
+                <p className="info-card-val">{currentStaff.full_name}</p>
               </div>
             </div>
 
-            <div className="info-card-light">
+            {/* Email Address Info Card with Inline Edit Mode */}
+            <div className={`info-card-light ${isEditingEmail ? 'info-card-highlight' : ''}`}>
               <div className="info-card-icon-box bg-indigo">
                 <Mail className="icon-sm" />
               </div>
-              <div>
-                <span className="info-card-label">Email Address</span>
-                <p className="info-card-val break-all" title={staff.email}>{staff.email}</p>
+              <div className="info-card-content-wrap">
+                <div className="info-card-header-row">
+                  <span className="info-card-label">Email Address</span>
+                  {!isEditingEmail && (
+                    <button
+                      type="button"
+                      className="btn-text-action"
+                      onClick={() => {
+                        setIsEditingEmail(true);
+                        setEmailInput(currentStaff.email || '');
+                        setEmailError('');
+                      }}
+                      title="Update Email Address"
+                    >
+                      <Edit2 className="icon-xs" />
+                      <span>Edit</span>
+                    </button>
+                  )}
+                </div>
+
+                {isEditingEmail ? (
+                  <form onSubmit={handleSaveEmail} className="edit-email-form">
+                    <div className="edit-email-input-group">
+                      <input
+                        type="email"
+                        className="form-input form-input-sm"
+                        value={emailInput}
+                        onChange={(e) => {
+                          setEmailInput(e.target.value);
+                          if (emailError) setEmailError('');
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            setIsEditingEmail(false);
+                            setEmailInput(currentStaff.email || '');
+                            setEmailError('');
+                          }
+                        }}
+                        placeholder="Enter new email address"
+                        autoFocus
+                        disabled={isSavingEmail}
+                      />
+                    </div>
+                    {emailError && (
+                      <p className="text-danger text-xs mt-1 mb-1 font-medium flex items-center gap-1">
+                        <AlertCircle className="icon-xs flex-shrink-0" />
+                        <span>{emailError}</span>
+                      </p>
+                    )}
+                    <div className="edit-email-actions-row">
+                      <button
+                        type="submit"
+                        className="btn btn-primary btn-sm"
+                        disabled={isSavingEmail}
+                      >
+                        {isSavingEmail ? (
+                          <>
+                            <Loader2 className="icon-xs spinner-icon mr-1" />
+                            <span>Saving...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="icon-xs mr-1" />
+                            <span>Save Email</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => {
+                          setIsEditingEmail(false);
+                          setEmailInput(currentStaff.email || '');
+                          setEmailError('');
+                        }}
+                        disabled={isSavingEmail}
+                      >
+                        <X className="icon-xs mr-1" />
+                        <span>Cancel</span>
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <p className="info-card-val break-all" title={currentStaff.email}>
+                    {currentStaff.email}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -116,7 +256,7 @@ export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff
               </div>
               <div>
                 <span className="info-card-label">Mobile Phone</span>
-                <p className="info-card-val">{staff.mobile || 'Not provided'}</p>
+                <p className="info-card-val">{currentStaff.mobile || 'Not provided'}</p>
               </div>
             </div>
 
@@ -126,7 +266,7 @@ export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff
               </div>
               <div>
                 <span className="info-card-label">Account Created</span>
-                <p className="info-card-val">{formatDateTime(staff.created_at)}</p>
+                <p className="info-card-val">{formatDateTime(currentStaff.created_at)}</p>
               </div>
             </div>
           </div>
@@ -141,13 +281,13 @@ export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff
               <div className="timestamp-item">
                 <span className="timestamp-label">Last Login:</span>
                 <span className="timestamp-val">
-                  {staff.last_login_at ? formatDateTime(staff.last_login_at) : 'No login recorded'}
+                  {currentStaff.last_login_at ? formatDateTime(currentStaff.last_login_at) : 'No login recorded'}
                 </span>
               </div>
               <div className="timestamp-item">
                 <span className="timestamp-label">Last Logout:</span>
                 <span className="timestamp-val">
-                  {staff.last_logout_at ? formatDateTime(staff.last_logout_at) : 'N/A'}
+                  {currentStaff.last_logout_at ? formatDateTime(currentStaff.last_logout_at) : 'N/A'}
                 </span>
               </div>
             </div>
@@ -182,12 +322,27 @@ export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff
 
         {/* Modal Footer */}
         <div className="modal-footer">
+          {/* Update Email ID button in footer */}
+          <button
+            type="button"
+            className="btn btn-primary-outline"
+            onClick={() => {
+              setIsEditingEmail(true);
+              setEmailInput(currentStaff.email || '');
+              setEmailError('');
+            }}
+            title="Update Staff Email ID"
+          >
+            <Mail className="icon-xs mr-1.5" />
+            <span>Update Email ID</span>
+          </button>
+
           {onDeleteStaff && !isAdmin && (
             <button
               type="button"
               className="btn btn-danger-outline"
               onClick={() => {
-                onDeleteStaff(staff);
+                onDeleteStaff(currentStaff);
                 onClose();
               }}
               title="Permanently delete staff account"
@@ -202,7 +357,7 @@ export const StaffDetailModal = ({ staff, onClose, onToggleStatus, onDeleteStaff
               type="button"
               className={`btn ${isActive ? 'btn-warning-outline' : 'btn-success-outline'}`}
               onClick={() => {
-                onToggleStatus(staff);
+                onToggleStatus(currentStaff);
                 onClose();
               }}
             >

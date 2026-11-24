@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { supabase, secondarySupabase, isSupabaseConfigured } from '../config/supabaseClient';
 
 let inFlightStaffListPromise = null;
@@ -364,6 +363,114 @@ export const staffService = {
 
     const freshList = await this.getStaffListAsync();
     return { success: true, staffList: freshList };
+  },
+
+  /**
+   * Update Staff Email Address
+   * 1. Validates format (must have @, domain, valid regex)
+   * 2. Checks if email is already in use by another user in public.profiles
+   * 3. If updating current logged-in user, calls supabase.auth.updateUser({ email })
+   * 4. Attempts calling SECURITY DEFINER RPC 'admin_update_user_email'
+   * 5. Persists email directly in public.profiles table
+   * 6. Updates localStorage cache & returns fresh staff list
+   */
+  async updateStaffEmailAsync(staffId, newEmail) {
+    const cleanEmail = (newEmail || '').trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!cleanEmail) {
+      return { success: false, error: 'Email Address is required.' };
+    }
+
+    if (!cleanEmail.includes('@') || !emailRegex.test(cleanEmail)) {
+      return { success: false, error: 'Please enter a valid email address (e.g. rahul@sevakendra.com).' };
+    }
+
+    if (!isSupabaseConfigured() || !supabase) {
+      return { success: false, error: 'Database connection is not configured.' };
+    }
+
+    try {
+      // 1. Check if email already used by another account in profiles
+      const { data: existingProfiles, error: checkErr } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', cleanEmail)
+        .neq('id', staffId)
+        .limit(1);
+
+      if (!checkErr && existingProfiles && existingProfiles.length > 0) {
+        return { success: false, error: 'This email address is already in use by another account.' };
+      }
+
+      let updatedInAuth = false;
+      const nowISO = new Date().toISOString();
+
+      // 2. Check if the caller is updating themselves
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUser = authData?.user;
+
+      if (currentUser && currentUser.id === staffId) {
+        try {
+          const { error: selfUpdateErr } = await supabase.auth.updateUser({ email: cleanEmail });
+          if (!selfUpdateErr) {
+            updatedInAuth = true;
+          }
+        } catch (selfEx) {
+          console.warn('Self email update notice:', selfEx);
+        }
+      }
+
+      // 3. If not updated yet (e.g. Admin updating a staff member), try RPC 'admin_update_user_email'
+      if (!updatedInAuth) {
+        try {
+          const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_update_user_email', {
+            p_user_id: staffId,
+            p_new_email: cleanEmail
+          });
+
+          if (!rpcErr && rpcRes?.success) {
+            updatedInAuth = true;
+          } else if (rpcErr) {
+            console.warn('admin_update_user_email RPC notice, falling back to direct profiles update:', rpcErr.message);
+          }
+        } catch (rpcEx) {
+          console.warn('admin_update_user_email RPC call exception:', rpcEx);
+        }
+      }
+
+      // 4. Always update public.profiles table to guarantee persistence
+      const { error: profileUpdateErr } = await supabase
+        .from('profiles')
+        .update({ email: cleanEmail, updated_at: nowISO })
+        .eq('id', staffId);
+
+      if (profileUpdateErr) {
+        console.error('Failed to update email in profiles:', profileUpdateErr);
+        return { success: false, error: profileUpdateErr.message || 'Failed to update email address in database.' };
+      }
+
+      // 5. Update cached profiles in localStorage
+      try {
+        const cached = localStorage.getItem('workpay_cached_staff_profiles');
+        if (cached) {
+          const list = JSON.parse(cached);
+          const updatedList = list.map((s) => (s.id === staffId ? { ...s, email: cleanEmail, updated_at: nowISO } : s));
+          localStorage.setItem('workpay_cached_staff_profiles', JSON.stringify(updatedList));
+        }
+      } catch {
+        /* ignore */
+      }
+
+      // 6. Return fresh list
+      const freshList = await this.getStaffListAsync();
+      const updatedStaff = freshList.find((s) => s.id === staffId) || { id: staffId, email: cleanEmail };
+
+      return { success: true, staff: updatedStaff, staffList: freshList };
+    } catch (err) {
+      console.error('Update staff email exception:', err);
+      return { success: false, error: err.message || 'An unexpected error occurred while updating email.' };
+    }
   },
 
   /**

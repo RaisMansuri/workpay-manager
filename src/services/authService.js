@@ -2,6 +2,114 @@ import { supabase, isSupabaseConfigured } from '../config/supabaseClient';
 
 export const authService = {
   /**
+   * Helper to resolve email address from username, full name, mobile number, or email
+   */
+  async resolveEmailFromIdentifier(identifier) {
+    const rawInput = (identifier || '').trim();
+    if (!rawInput) return null;
+    if (rawInput.includes('@')) return rawInput.toLowerCase();
+
+    if (!isSupabaseConfigured() || !supabase) {
+      return `${rawInput.toLowerCase()}@sevakendra.com`;
+    }
+
+    // A. Match by exact full_name (case-insensitive)
+    try {
+      const { data: exactNameData } = await supabase
+        .from('profiles')
+        .select('email')
+        .ilike('full_name', rawInput)
+        .limit(1);
+
+      if (exactNameData && exactNameData.length > 0 && exactNameData[0]?.email) {
+        return exactNameData[0].email.toLowerCase();
+      }
+    } catch (_) {
+      /* ignore */
+    }
+
+    // B. Match where email username/prefix matches (e.g. 'rehan' matches 'rehan@gmail.com')
+    try {
+      const { data: prefixData } = await supabase
+        .from('profiles')
+        .select('email')
+        .ilike('email', `${rawInput}@%`)
+        .limit(1);
+
+      if (prefixData && prefixData.length > 0 && prefixData[0]?.email) {
+        return prefixData[0].email.toLowerCase();
+      }
+    } catch (_) {
+      /* ignore */
+    }
+
+    // C. Match where full_name contains the keyword (e.g. 'rehan' in 'Rehan Ansari')
+    try {
+      const { data: partialNameData } = await supabase
+        .from('profiles')
+        .select('email')
+        .ilike('full_name', `%${rawInput}%`)
+        .limit(1);
+
+      if (partialNameData && partialNameData.length > 0 && partialNameData[0]?.email) {
+        return partialNameData[0].email.toLowerCase();
+      }
+    } catch (_) {
+      /* ignore */
+    }
+
+    // D. Match by mobile phone number if digits only
+    if (/^\d+$/.test(rawInput)) {
+      try {
+        const { data: mobileData } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('mobile', rawInput)
+          .limit(1);
+
+        if (mobileData && mobileData.length > 0 && mobileData[0]?.email) {
+          return mobileData[0].email.toLowerCase();
+        }
+      } catch (_) {
+        /* ignore */
+      }
+    }
+
+    // E. Fallback search in cached profiles (localStorage)
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('workpay_cached_staff_profiles');
+        if (cached) {
+          const list = JSON.parse(cached);
+          const low = rawInput.toLowerCase();
+          const found = list.find((s) => {
+            const sName = (s.full_name || '').toLowerCase();
+            const sEmail = (s.email || '').toLowerCase();
+            const sMobile = String(s.mobile || '');
+            return (
+              sName === low ||
+              sEmail.startsWith(`${low}@`) ||
+              sName.includes(low) ||
+              sMobile === rawInput
+            );
+          });
+          if (found?.email) {
+            return found.email.toLowerCase();
+          }
+        }
+      } catch (_) {
+        /* ignore */
+      }
+    }
+
+    // F. Final fallback for demo shortcuts or default domain
+    const low = rawInput.toLowerCase();
+    if (low === 'admin') return 'admin@sevakendra.com';
+    if (low === 'staff') return 'staff@sevakendra.com';
+    return `${low}@sevakendra.com`;
+  },
+
+  /**
    * 1. Sign In with Supabase Auth & Profile Database Verification
    * Workflow:
    *  User Login -> Supabase Auth -> Verify Email+Password in Database -> Fetch Profile from DB -> Check Status (active/inactive) -> Check Role -> Grant Access
@@ -20,120 +128,9 @@ export const authService = {
       };
     }
 
-    let cleanEmail = rawInput.toLowerCase();
-
     try {
-      // 1. Resolve email from profiles table if username typed without @ domain (e.g., 'rehan', 'admin', 'Rais Mansuri')
-      if (!rawInput.includes('@')) {
-        let resolvedEmail = null;
-
-        // A. Match by exact full_name (case-insensitive)
-        try {
-          const { data: exactNameData } = await supabase
-            .from('profiles')
-            .select('email')
-            .ilike('full_name', rawInput)
-            .limit(1);
-
-          if (exactNameData && exactNameData.length > 0 && exactNameData[0]?.email) {
-            resolvedEmail = exactNameData[0].email;
-          }
-        } catch (_) {
-          /* ignore */
-        }
-
-        // B. Match where email username/prefix matches (e.g. 'rehan' matches 'rehan@gmail.com')
-        if (!resolvedEmail) {
-          try {
-            const { data: prefixData } = await supabase
-              .from('profiles')
-              .select('email')
-              .ilike('email', `${rawInput}@%`)
-              .limit(1);
-
-            if (prefixData && prefixData.length > 0 && prefixData[0]?.email) {
-              resolvedEmail = prefixData[0].email;
-            }
-          } catch (_) {
-            /* ignore */
-          }
-        }
-
-        // C. Match where full_name contains the keyword (e.g. 'rehan' in 'Rehan Ansari')
-        if (!resolvedEmail) {
-          try {
-            const { data: partialNameData } = await supabase
-              .from('profiles')
-              .select('email')
-              .ilike('full_name', `%${rawInput}%`)
-              .limit(1);
-
-            if (partialNameData && partialNameData.length > 0 && partialNameData[0]?.email) {
-              resolvedEmail = partialNameData[0].email;
-            }
-          } catch (_) {
-            /* ignore */
-          }
-        }
-
-        // D. Match by mobile phone number if digits only
-        if (!resolvedEmail && /^\d+$/.test(rawInput)) {
-          try {
-            const { data: mobileData } = await supabase
-              .from('profiles')
-              .select('email')
-              .eq('mobile', rawInput)
-              .limit(1);
-
-            if (mobileData && mobileData.length > 0 && mobileData[0]?.email) {
-              resolvedEmail = mobileData[0].email;
-            }
-          } catch (_) {
-            /* ignore */
-          }
-        }
-
-        // E. Fallback search in cached profiles (localStorage)
-        if (!resolvedEmail && typeof window !== 'undefined') {
-          try {
-            const cached = localStorage.getItem('workpay_cached_staff_profiles');
-            if (cached) {
-              const list = JSON.parse(cached);
-              const low = rawInput.toLowerCase();
-              const found = list.find((s) => {
-                const sName = (s.full_name || '').toLowerCase();
-                const sEmail = (s.email || '').toLowerCase();
-                const sMobile = String(s.mobile || '');
-                return (
-                  sName === low ||
-                  sEmail.startsWith(`${low}@`) ||
-                  sName.includes(low) ||
-                  sMobile === rawInput
-                );
-              });
-              if (found?.email) {
-                resolvedEmail = found.email;
-              }
-            }
-          } catch (_) {
-            /* ignore */
-          }
-        }
-
-        // F. Final fallback for demo shortcuts or default domain
-        if (resolvedEmail) {
-          cleanEmail = resolvedEmail.toLowerCase();
-        } else {
-          const low = rawInput.toLowerCase();
-          if (low === 'admin') {
-            cleanEmail = 'admin@sevakendra.com';
-          } else if (low === 'staff') {
-            cleanEmail = 'staff@sevakendra.com';
-          } else {
-            cleanEmail = `${low}@sevakendra.com`;
-          }
-        }
-      }
+      // 1. Resolve email from profiles table if username typed without @ domain
+      const cleanEmail = await this.resolveEmailFromIdentifier(rawInput);
 
       // 2. Strict Database Authentication via Supabase Auth
       let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -390,6 +387,99 @@ export const authService = {
     } catch (err) {
       console.warn('Profile watch realtime notice:', err);
       return () => { };
+    }
+  },
+
+  /**
+   * 7. Send Password Reset Instructions Link via Supabase Auth
+   */
+  async sendPasswordResetEmail(identifier) {
+    const rawInput = (identifier || '').trim();
+    if (!rawInput) {
+      return { success: false, error: 'Please enter your username or email address.' };
+    }
+
+    if (!isSupabaseConfigured() || !supabase) {
+      return {
+        success: false,
+        error: 'Database connection is not configured. Please contact system administrator.'
+      };
+    }
+
+    try {
+      const targetEmail = await this.resolveEmailFromIdentifier(rawInput);
+      if (!targetEmail) {
+        return {
+          success: false,
+          error: 'No account found matching that username or email address.'
+        };
+      }
+
+      const redirectUrl = `${window.location.origin}/reset-password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
+        redirectTo: redirectUrl
+      });
+
+      if (error) {
+        let msg = error.message || '';
+        if (msg.toLowerCase().includes('rate limit') || error.status === 429) {
+          msg = 'Too many password reset requests. Please wait a few minutes before trying again.';
+        }
+        return { success: false, error: msg, email: targetEmail };
+      }
+
+      // Obfuscate email for user privacy (e.g., r***@gmail.com)
+      const parts = targetEmail.split('@');
+      const namePart = parts[0];
+      const domainPart = parts[1] || '';
+      const obfuscated = namePart.length <= 2
+        ? `${namePart[0]}***@${domainPart}`
+        : `${namePart[0]}***${namePart[namePart.length - 1]}@${domainPart}`;
+
+      return {
+        success: true,
+        email: targetEmail,
+        obfuscatedEmail: obfuscated,
+        message: `Password reset instructions have been sent to ${obfuscated}.`
+      };
+    } catch (err) {
+      console.error('Password reset email dispatch exception:', err);
+      return {
+        success: false,
+        error: err.message || 'An unexpected error occurred while sending password reset email.'
+      };
+    }
+  },
+
+  /**
+   * 8. Update Password for an active or recovery session
+   */
+  async updateNewPassword(newPassword) {
+    const trimmed = (newPassword || '').trim();
+    if (!trimmed || trimmed.length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters long.' };
+    }
+
+    if (!isSupabaseConfigured() || !supabase) {
+      return { success: false, error: 'Database connection is not configured.' };
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: trimmed
+      });
+
+      if (error) {
+        return { success: false, error: error.message || 'Failed to update password.' };
+      }
+
+      return {
+        success: true,
+        message: 'Password updated successfully! You can now log in with your new password.'
+      };
+    } catch (err) {
+      console.error('Update password exception:', err);
+      return { success: false, error: err.message || 'Failed to update password.' };
     }
   }
 };
