@@ -1,27 +1,46 @@
 <!DOCTYPE html>
 <html>
-
 <body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
     <tr>
       <td align="center">
-        <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;padding:40px;">
+        <table width="480" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:12px;padding:40px 32px;box-shadow:0 4px 16px rgba(0,0,0,0.05);border:1px solid #e5e7eb;">
           <tr>
             <td align="center" style="padding-bottom:20px;">
-              <img src="https://nqnyhqkwskvkstpqjvkv.supabase.co/storage/v1/object/public/assets/logo.png" alt="Logo"
-                width="56" height="56" style="display:block;border-radius:16px;" />
+              <!-- Pure CSS/SVG Logo Badge (No external image URL required) -->
+              <table border="0" cellpadding="0" cellspacing="0" align="center">
+                <tr>
+                  <td align="center" valign="middle" bgcolor="#3452e8" width="56" height="56" style="width:56px;height:56px;background-color:#3452e8;border-radius:14px;text-align:center;vertical-align:middle;box-shadow:0 4px 12px rgba(52,82,232,0.25);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto;">
+                      <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                      <path d="M9 22v-4h6v4"></path>
+                      <path d="M8 6h.01"></path>
+                      <path d="M16 6h.01"></path>
+                      <path d="M12 6h.01"></path>
+                      <path d="M12 10h.01"></path>
+                      <path d="M12 14h.01"></path>
+                      <path d="M16 10h.01"></path>
+                      <path d="M16 14h.01"></path>
+                      <path d="M8 10h.01"></path>
+                      <path d="M8 14h.01"></path>
+                    </svg>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           <tr>
             <td align="center">
-              <h2 style="margin:0 0 12px;color:#111827;font-size:22px;">Reset your password</h2>
+              <h2 style="margin:0 0 12px;color:#111827;font-size:22px;font-weight:700;">Reset your password</h2>
               <p style="margin:0 0 24px;color:#6b7280;font-size:15px;line-height:1.5;">
                 We received a request to reset your password.
                 Click the button below to set a new one.
               </p>
-              <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#3452e8;color:#ffffff;
+              <a href="{{ .ConfirmationURL }}"
+                 style="display:inline-block;background:#3452e8;color:#ffffff;
                         text-decoration:none;padding:14px 32px;border-radius:8px;
-                        font-weight:bold;font-size:15px;">
+                        font-weight:bold;font-size:15px;letter-spacing:0.01em;">
                 Reset Password
               </a>
               <p style="margin:28px 0 0;color:#9ca3af;font-size:13px;line-height:1.5;">
@@ -32,11 +51,10 @@
           </tr>
         </table>
         <p style="color:#9ca3af;font-size:12px;margin-top:20px;">
-          © 2026 Sevadesk. All rights reserved.
+          &copy; 2026 Sevadesk App. All rights reserved.
         </p>
       </td>
     </tr>
   </table>
 </body>
-
 </html>
